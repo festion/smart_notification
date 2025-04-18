@@ -3,11 +3,41 @@
   "version": "1.0.0",
   "slug": "smart_notification",
   "description": "Flexible notification routing with severity, audience, and deduplication",
+  "url": "https://github.com/festion/smart_notification",
   "startup": "application",
   "boot": "auto",
   "host_network": true,
-  "options": {},
-  "schema": {},
-  "arch": ["amd64", "aarch64", "armv7"],
-  "ingress": false
+  "ingress": true,
+  "ingress_port": 8099,
+  "panel_icon": "mdi:bell-ring",
+  "panel_title": "Smart Notifications",
+  "homeassistant_api": true,
+  "services": [
+    "notify"
+  ],
+  "options": {
+    "deduplication_ttl": 300,
+    "audiences": {
+      "mobile": {
+        "services": ["notify.mobile_app_pixel_9_pro_xl"],
+        "min_severity": "high"
+      },
+      "dashboard": {
+        "services": ["persistent_notification.create"],
+        "min_severity": "low"
+      }
+    },
+    "severity_levels": ["low", "medium", "high", "emergency"]
+  },
+  "schema": {
+    "deduplication_ttl": "int(60,3600)",
+    "audiences": {
+      "str?": {
+        "services": ["str"],
+        "min_severity": "str"
+      }
+    },
+    "severity_levels": ["str"]
+  },
+  "arch": ["amd64", "aarch64", "armv7"]
 }

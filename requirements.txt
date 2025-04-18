@@ -1,3 +1,5 @@
 paho-mqtt
 pyyaml
 flask
+requests
+jinja2
