@@ -10,17 +10,44 @@ This document provides technical details for development and maintenance of the 
 - **run.sh**: Application startup script
 - **requirements.txt**: Python dependencies
 - **config.json**: Add-on configuration for Home Assistant
+- **build.json**: Build configuration for the add-on
+- **web/**: Web UI files
+
+## Repository Structure
+
+The repository is structured according to Home Assistant add-on requirements:
+```
+smart_notification/               # Repository root
+├── README.md                     # Repository README
+├── CLAUDE.md                     # Development documentation
+├── repository.json               # Repository information
+├── build.yaml                    # Repository build information
+├── config.yaml                   # Repository add-on list
+└── smart_notification/           # Add-on directory
+    ├── config.json               # Add-on configuration
+    ├── build.json                # Add-on build configuration
+    ├── Dockerfile                # Add-on container definition
+    ├── main.py                   # Main application code
+    ├── requirements.txt          # Python dependencies
+    ├── README.md                 # Add-on specific README
+    ├── rootfs/                   # Add-on filesystem
+    │   └── etc/services.d/smart-notification/
+    │       └── run               # S6 service definition
+    ├── web/                      # Web UI files
+    └── ...                       # Other add-on files
+```
 
 ## Core Components
 
 ### 1. Flask API Server
 
-The application runs a Flask server exposing a `/notify` endpoint that processes notification requests.
+The application runs a Flask server exposing a `/notify` endpoint that processes notification requests and a web UI for configuration.
 
 Key components:
 - Message deduplication using SHA-256 hashing
 - Configurable deduplication time window (default: 300 seconds)
 - Request validation and parsing
+- Web UI for configuration
 
 ### 2. Configuration System
 
@@ -40,6 +67,31 @@ The routing logic:
    - Checks if the message severity meets the minimum threshold
    - Routes to all configured services for that audience if severity is sufficient
 
+## Home Assistant Add-on Integration
+
+The add-on integrates with Home Assistant using:
+- Ingress for the web UI
+- Home Assistant API for notification services
+- Add-on configuration for storing user preferences
+- S6 overlay for service management
+
+## Release History
+
+### v1.0.1
+- Updated repository structure to comply with Home Assistant add-on requirements
+- Added build.json for add-on build configuration
+- Fixed Home Assistant integration configurations:
+  - Added hassio_api and hassio_role parameters
+  - Updated initialization parameters in config.json
+  - Added custom icon and panel configuration
+
+### v1.0.0
+- Initial release with basic notification routing
+- Web UI for configuration
+- Severity-based filtering
+- Audience targeting
+- Deduplication mechanism
+
 ## Development Guidelines
 
 ### Adding Features
@@ -55,6 +107,8 @@ The routing logic:
 
 ### Testing
 
+Test the notification API with:
+
 ```python
 # Example test request
 import requests
@@ -66,20 +120,8 @@ payload = {
     "audience": ["mobile", "dashboard"]
 }
 
-response = requests.post("http://localhost:8080/notify", json=payload)
+response = requests.post("http://localhost:8099/notify", json=payload)
 print(response.json())
-```
-
-## Docker Container
-
-The application is containerized with:
-- Python 3.11 base image
-- Minimal dependencies
-- Configurable through volume mounts
-
-Build the container with:
-```bash
-docker build -t smart-notification .
 ```
 
 ## Future Improvements
@@ -87,5 +129,6 @@ docker build -t smart-notification .
 1. Authentication for the API endpoint
 2. Notification history and status tracking
 3. Templating system for notification formatting
-4. Integration with additional notification services
-5. Web UI for configuration management
+4. Direct integration with additional notification services
+5. Enhanced error handling and recovery
+6. Real-time notification preview in the web UI

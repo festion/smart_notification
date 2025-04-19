@@ -1,44 +1,42 @@
-ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.16
+ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
 # Set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Install required packages
-RUN apk add --no-cache \
-    python3 \
-    py3-pip \
-    nginx
+# Set up base system
+ARG BUILD_ARCH=amd64
 
-# Create app directory
-WORKDIR /app
+# Install requirements for add-on
+RUN \
+    apk add --no-cache \
+        python3 \
+        py3-pip \
+        bash \
+        nginx
 
-# Copy files
-COPY requirements.txt /app/
-COPY main.py /app/
-COPY run.sh /app/
-COPY web /app/web/
-
-# Copy rootfs
+# Copy root filesystem
 COPY rootfs /
 
-# Install python requirements
-RUN pip3 install --no-cache-dir -r requirements.txt
+WORKDIR /app
+
+# Copy app files
+COPY main.py /app/
+COPY run.sh /app/
+COPY requirements.txt /app/
+COPY web /app/web/
 
 # Make scripts executable
 RUN chmod a+x /app/run.sh \
     && chmod a+x /etc/services.d/smart-notification/run
 
-# Expose ports
-EXPOSE 8099
-
-# Set S6 init as entrypoint
-ENTRYPOINT ["/init"]
+# Install python requirements
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Labels
 LABEL \
     io.hass.name="Smart Notification Router" \
     io.hass.description="Flexible notification routing with severity, audience, and deduplication" \
     io.hass.type="addon" \
-    io.hass.version="${BUILD_VERSION}" \
+    io.hass.version=${BUILD_VERSION} \
     maintainer="Festion <festion@example.com>"

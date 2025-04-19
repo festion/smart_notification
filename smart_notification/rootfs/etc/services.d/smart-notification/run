@@ -1,30 +1,32 @@
 #!/usr/bin/with-contenv bashio
 
-CONFIG_PATH=/data/options.json
-NOTIFICATION_CONFIG=/config/notification_config.yaml
-
 bashio::log.info "Starting Smart Notification Router..."
 
 # Generate configuration from the add-on options
-bashio::log.info "Generating configuration file..."
+bashio::log.info "Generating configuration file from add-on options..."
 
-python3 - << "EOL" > $NOTIFICATION_CONFIG
+python3 - << "EOL" > /config/notification_config.yaml
 import json
 import yaml
 import os
 
-CONFIG_PATH = '/data/options.json'
+options_file = '/data/options.json'
 
-with open(CONFIG_PATH, 'r') as f:
-    config = json.load(f)
-
-notification_config = {
-    'audiences': config['audiences'],
-    'severity_levels': config['severity_levels']
-}
-
-with open('/config/notification_config.yaml', 'w') as f:
-    yaml.dump(notification_config, f, default_flow_style=False)
+if os.path.exists(options_file):
+    with open(options_file, 'r') as f:
+        options = json.load(f)
+        
+    config = {
+        'audiences': options.get('audiences', {}),
+        'severity_levels': options.get('severity_levels', ['low', 'medium', 'high', 'emergency'])
+    }
+    
+    with open('/config/notification_config.yaml', 'w') as f:
+        yaml.dump(config, f, default_flow_style=False)
+        
+    print("Configuration generated successfully")
+else:
+    print("Options file not found")
 EOL
 
 # Start the application
