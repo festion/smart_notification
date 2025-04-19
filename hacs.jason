@@ -1,0 +1,6 @@
+{
+  "name": "Smart Notification",
+  "domain": "smart_notification",
+  "render_readme": true,
+  "homeassistant": "2022.8.0"
+}
