@@ -3,7 +3,7 @@
   "version": "1.0.2",
   "slug": "smart_notification_router",
   "description": "Flexible notification routing with severity, audience, and deduplication",
-  "url": "https://github.com/festion/smart_notification/tree/main/smart_notification_router",
+  "url": "https://github.com/festion/smart_notification",
   "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
   "startup": "application",
   "boot": "auto",
