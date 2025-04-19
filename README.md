@@ -2,7 +2,7 @@
 
 A flexible notification routing service for Home Assistant that enables targeted notifications based on severity and audience.
 
-![Smart Notification Router](https://github.com/festion/smart_notification/raw/main/smart_notification/logo.svg)
+![Smart Notification Router](https://github.com/festion/smart_notification/raw/main/smart_notification_router/logo.svg)
 
 ## Features
 
@@ -113,12 +113,14 @@ This repository follows the Home Assistant add-on repository structure:
 ```
 smart_notification/               # Repository root
 ├── README.md                     # Repository README
+├── CLAUDE.md                     # Development documentation
 ├── repository.json               # Repository information
-└── smart_notification/           # Add-on directory
+└── smart_notification_router/    # Add-on directory
     ├── config.json               # Add-on configuration
     ├── Dockerfile                # Add-on container definition
     ├── main.py                   # Main application code
     ├── requirements.txt          # Python dependencies
+    ├── README.md                 # Add-on specific README
     ├── rootfs/                   # Add-on filesystem
     ├── web/                      # Web UI files
     └── ...                       # Other add-on files

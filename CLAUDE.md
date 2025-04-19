@@ -10,7 +10,6 @@ This document provides technical details for development and maintenance of the 
 - **run.sh**: Application startup script
 - **requirements.txt**: Python dependencies
 - **config.json**: Add-on configuration for Home Assistant
-- **build.json**: Build configuration for the add-on
 - **web/**: Web UI files
 
 ## Repository Structure
@@ -21,11 +20,8 @@ smart_notification/               # Repository root
 ├── README.md                     # Repository README
 ├── CLAUDE.md                     # Development documentation
 ├── repository.json               # Repository information
-├── build.yaml                    # Repository build information
-├── config.yaml                   # Repository add-on list
-└── smart_notification/           # Add-on directory
+└── smart_notification_router/    # Add-on directory
     ├── config.json               # Add-on configuration
-    ├── build.json                # Add-on build configuration
     ├── Dockerfile                # Add-on container definition
     ├── main.py                   # Main application code
     ├── requirements.txt          # Python dependencies
@@ -76,6 +72,12 @@ The add-on integrates with Home Assistant using:
 - S6 overlay for service management
 
 ## Release History
+
+### v1.0.2
+- Updated repository structure to match Home Assistant add-on requirements
+- Renamed add-on directory to smart_notification_router for clarity
+- Updated configuration to use standard Home Assistant add-on conventions
+- Fixed Dockerfile to use standard Home Assistant base image
 
 ### v1.0.1
 - Updated repository structure to comply with Home Assistant add-on requirements

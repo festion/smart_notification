@@ -1,7 +1,0 @@
----
-channel: stable
-addons:
-  smart_notification:
-    repository: festion/smart_notification
-    target: smart_notification
-    image: ghcr.io/festion/smart_notification-{arch}
