@@ -1,0 +1,5 @@
+#!/command/execlineb -P
+s6-setuidgid root
+cd /app
+with-contenv
+python3 main.py

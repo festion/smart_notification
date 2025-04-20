@@ -1,6 +1,6 @@
 {
   "name": "Smart Notification Router",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "slug": "smart_notification_router",
   "description": "Flexible notification routing with severity, audience, and deduplication",
   "startup": "application",

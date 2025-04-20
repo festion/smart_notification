@@ -2,6 +2,18 @@ ARG BUILD_FROM
 FROM $BUILD_FROM
 
 ENV LANG C.UTF-8
+ENV S6_KEEP_ENV=1
+ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2
+
+# Create directories
+RUN mkdir -p /app /config
+
+# Copy root filesystem
+COPY rootfs /
+
+# Make scripts executable
+RUN chmod -x /etc/services.d/smart-notification/finish || true
+RUN chmod +x /etc/services.d/smart-notification/run
 
 # Install necessary packages
 RUN apk add --no-cache \
@@ -12,11 +24,8 @@ RUN apk add --no-cache \
     py3-requests \
     py3-jinja2
 
-# Create directories
-WORKDIR /app
-RUN mkdir -p /config
-
 # Copy application files
+WORKDIR /app
 COPY main.py /app/
 COPY notification_config.yaml /app/
 COPY requirements.txt /app/
@@ -29,11 +38,4 @@ RUN chmod -R 755 /app && \
 # Install any remaining requirements
 RUN pip3 install --no-cache-dir -r /app/requirements.txt || echo "Continuing with system packages"
 
-# Create start script
-COPY start.sh /
-RUN chmod +x /start.sh
-
 EXPOSE 8080
-
-# Entry point
-CMD ["/start.sh"]

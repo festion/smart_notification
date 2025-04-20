@@ -73,6 +73,13 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.19
+- Completely restructured S6 overlay integration
+- Added proper S6 service structure for Home Assistant
+- Implemented S6 long-running service configuration
+- Created S6-compatible run scripts
+- Fixed container entrypoint issue
+
 ### v1.0.18
 - Fixed Docker image format issues
 - Created separate start.sh script for proper execution
