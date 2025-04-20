@@ -31,4 +31,4 @@ EOL
 
 # Start the application
 cd /app
-python3 main.py
+exec python3 main.py

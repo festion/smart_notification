@@ -73,6 +73,11 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.5
+- Fixed S6 overlay initialization error (s6-overlay-suexec: fatal: can only run as pid 1)
+- Updated Dockerfile to properly use the S6 init system
+- Changed service script to use exec for proper process management
+
 ### v1.0.4
 - Fixed repository icon by adding proper reference in repository.json
 - Corrected hacs.json filename (was incorrectly named hacs.jason)

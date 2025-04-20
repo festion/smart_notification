@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy root filesystem
+COPY rootfs /
+
 # Copy add-on files
 COPY run.sh /
 RUN mkdir -p /app
@@ -19,6 +22,7 @@ COPY web /app/web/
 
 # Set permissions
 RUN chmod a+x /run.sh
+RUN chmod a+x /etc/services.d/smart-notification/run
 
 # Install requirements
 WORKDIR /app
@@ -30,4 +34,4 @@ RUN apt-get update && apt-get install -y \
     python3-jinja2 \
     && rm -rf /var/lib/apt/lists/*
 
-CMD [ "/run.sh" ]
+ENTRYPOINT ["/init"]
