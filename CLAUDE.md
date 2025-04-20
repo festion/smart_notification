@@ -73,6 +73,73 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.33
+- Fixed "Invalid audiences format" warning in logs
+- Improved options loading from Home Assistant configuration
+- Fixed white text on gray background in UI for better visibility
+- Enhanced text contrast throughout the interface
+- Ensured consistent text colors for all UI elements
+- Added explicit background colors for better readability
+- Improved button text visibility with higher contrast
+
+### v1.0.32
+- Enhanced services API endpoint for better integration
+- Improved notification_config.yaml with detailed documentation
+- Added service categorization by type (mobile, dashboard, media)
+- Added example audience configurations for common use cases
+- Improved service descriptions for UI integration
+- Enhanced code to better reflect the audience/target design
+- Added detailed comments on severity levels
+
+### v1.0.31
+- Fixed "Invalid audiences type" error messages in logs
+- Added robust config validation and repair on load
+- Enhanced config structure validation for all components
+- Reduced log verbosity for production use
+- Added DEBUG_CONFIG environment variable for optional diagnostics
+- Improved error handling for malformed YAML configuration
+- Fixed audience type issues in multiple functions
+
+### v1.0.30
+- Fixed notification JSON parsing errors
+- Added robust error handling for audience format variations
+- Enhanced notification API endpoint with better error messages
+- Fixed JSON format issues in notification submission
+- Added detailed logging for notification processing
+- Improved audience type handling to support string inputs
+- Added diagnostic information for payload formatting
+
+### v1.0.29
+- Fixed UI style to match Home Assistant design
+- Added CSS variables for Home Assistant theme compatibility
+- Fixed buttons and form elements to follow HA styling
+- Fixed "[object Object]" issue with custom CSS hiding
+- Enhanced test notification functionality
+- Improved diagnostics for troubleshooting config issues
+- Added direct CSS overrides for better HA integration
+
+### v1.0.28
+- Fixed UI issues: buttons not working and "[object Object]" display in audiences
+- Added fallback JavaScript to ensure UI functionality works
+- Fixed JavaScript to properly handle different service data types
+- Copied icon files to add-on directory to fix broken icon display
+- Added debug logging to trace JavaScript initialization
+- Implemented browser console logging for UI debugging
+
+### v1.0.27
+- Fixed Jinja2 template error: "jinja2.exceptions.UndefinedError: 'str object' has no attribute 'items'"
+- Added defensive code to handle invalid config structure
+- Fixed template to use the correct iteration method for audiences
+- Added more logging for debugging template rendering issues
+- Enhanced error handling to prevent application crashes
+
+### v1.0.26
+- Fixed Windows line ending (CRLF) issues in shell scripts
+- Added automatic line ending conversion in Dockerfile and startup
+- Modified S6 service script to properly handle scripts with Windows line endings
+- Added additional debugging output for script execution
+- Enhanced permissions script to fix line endings at startup
+
 ### v1.0.25
 - Fixed broken icon display in the repository
 - Fixed icon references in repository.json and repository.yaml

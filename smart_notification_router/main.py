@@ -38,6 +38,19 @@ config = DEFAULT_CONFIG.copy()
 DEDUPLICATION_TTL = 300  # seconds
 SENT_MESSAGES = {}
 
+# User context (will be populated from Home Assistant)
+CURRENT_USER = {
+    "id": "default",
+    "name": "Default User",
+    "is_admin": False,
+    "audiences": ["mobile", "dashboard"],
+    "preferences": {
+        "min_severity": "low",
+        "notifications_enabled": True,
+        "notification_services": ["notify.mobile_app_default"]
+    }
+}
+
 app = Flask(__name__, 
     static_folder='/app/web/static',
     template_folder='/app/web/templates')
@@ -358,6 +371,23 @@ def status():
         "message_count": len(SENT_MESSAGES),
         "config_loaded": bool(config != DEFAULT_CONFIG)
     })
+
+@app.route("/user")
+def get_user():
+    """API endpoint to get current user information"""
+    try:
+        # In a real implementation, this would get the user from Home Assistant
+        # For now, just return our default user
+        return jsonify({
+            "user": CURRENT_USER,
+            "status": "ok"
+        })
+    except Exception as e:
+        logger.error(f"Error getting user information: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 def cleanup_thread():
     """Background thread to clean up old messages"""
