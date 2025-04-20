@@ -73,6 +73,12 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.13
+- Removed image reference to fix installation error
+- Reverted to building locally while keeping S6 fixes
+- Added GitHub Actions workflow for future pre-built images
+- Created GitHub Actions configuration for automated builds
+
 ### v1.0.12
 - Fixed S6 overlay issues with process initialization
 - Added pre-built Docker image support to avoid local builds

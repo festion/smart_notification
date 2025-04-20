@@ -1,0 +1,69 @@
+name: Build and publish Docker images
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+    paths:
+      - 'smart_notification_router/**'
+      - '.github/workflows/build-and-publish.yml'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    strategy:
+      matrix:
+        arch: [amd64, armv7, aarch64]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/smart_notification_router-${{ matrix.arch }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=ref,event=branch
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+            type=raw,value=${{ github.event.repository.default_branch == 'main' && 'latest' || '' }}
+      
+      - name: Set version from config.json
+        id: config
+        run: |
+          VERSION=$(grep -o '"version": "[^"]*"' smart_notification_router/config.json | cut -d'"' -f4)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: smart_notification_router
+          file: smart_notification_router/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/smart_notification_router-${{ matrix.arch }}:${{ steps.config.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/smart_notification_router-${{ matrix.arch }}:latest
+          build-args: |
+            BUILD_FROM=ghcr.io/home-assistant/${{ matrix.arch }}-base-debian:bookworm
+            BUILD_ARCH=${{ matrix.arch }}
+            S6_LOGGING=0
+            S6_BEHAVIOUR_IF_STAGE2_FAILS=2
