@@ -73,6 +73,11 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.8
+- Fixed repository.json structure to match Home Assistant add-on repository requirements
+- Updated the repository metadata with proper slug and add-ons list
+- Ensures the add-on is visible in the Home Assistant Add-on Store
+
 ### v1.0.7
 - Added Home Assistant API integration settings in config.json
 - Added `ingress_entry` parameter to improve Ingress functionality
