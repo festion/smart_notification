@@ -20,7 +20,7 @@
     }
   },
   "schema": {
-    "audiences": "dict(str?@services=list(str), min_severity=str)"
+    "audiences": "match(^\\{.*\\}$)"
   },
   "image": "ghcr.io/festion/smart_notification_router-{arch}"
 }
