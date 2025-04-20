@@ -30,5 +30,4 @@
     "audiences": "match(.*)",
     "severity_levels": ["str"]
   },
-  "image": "ghcr.io/festion/smart_notification_router-{arch}"
 }
