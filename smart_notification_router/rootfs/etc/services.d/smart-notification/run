@@ -1,5 +1,11 @@
-#!/usr/bin/with-contenv bash
-# Start your service here
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Start the smart notification service
+# ==============================================================================
 
-echo "[INFO] Starting Smart Notification Router..."
-exec python3 /opt/smart_notification/main.py
+# Change to the app directory
+cd /app || bashio::exit.nok "Could not change to app directory"
+
+# Run the start script
+bashio::log.info "Starting Smart Notification Router..."
+exec /app/run.sh

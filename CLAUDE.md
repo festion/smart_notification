@@ -73,6 +73,14 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.21
+- Switched to community add-on base image (ghcr.io/hassio-addons/base:12.2.7)
+- Removed custom S6 overlay configuration in favor of add-on base image
+- Updated run.sh script to use bashio for proper Home Assistant integration
+- Simplified Dockerfile and service structure
+- Fixed init issues by properly using the community add-on base image
+- Set init:false in config.json to use the base image's init system
+
 ### v1.0.20
 - Added extensive debugging and logging
 - Created diagnostic scripts for troubleshooting
