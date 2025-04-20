@@ -2,19 +2,5 @@
   "name": "Smart Notification Router",
   "url": "https://github.com/festion/smart_notification",
   "maintainer": "Festion",
-  "slug": "smart_notification",
-  "description": "Smart notification routing for Home Assistant",
-  "homeassistant": "0.115.0",
-  "addons": [
-    {
-      "name": "Smart Notification Router",
-      "slug": "smart_notification_router",
-      "description": "Flexible notification routing with severity, audience, and deduplication",
-      "repository": "festion/smart_notification",
-      "version": "1.0.7",
-      "target": "smart_notification_router",
-      "icon": "icons/icon.png",
-      "arch": ["amd64", "armv7", "aarch64"]
-    }
-  ]
+  "icon": "smart_notification_router/icon.png"
 }

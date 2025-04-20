@@ -73,6 +73,12 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.9
+- Reverted repository.json to working structure from v1.0.5
+- Simplified add-on configuration to restore visibility in the Add-on Store
+- Removed experimental Home Assistant API settings that may have caused issues
+- Maintained schema improvements for audience configuration
+
 ### v1.0.8
 - Fixed repository.json structure to match Home Assistant add-on repository requirements
 - Updated the repository metadata with proper slug and add-ons list
