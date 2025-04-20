@@ -107,7 +107,15 @@ def index():
         global_config = DEFAULT_CONFIG.copy()
     else:
         global_config = config
-
+    
+    # Debug and log the config structure to help diagnose issues
+    logger.info(f"Config structure: {type(global_config)}")
+    for key, value in global_config.items():
+        logger.info(f"Key: {key}, Type: {type(value)}")
+        if key == "audiences" and isinstance(value, dict):
+            for audience_name, audience_config in value.items():
+                logger.info(f"  Audience: {audience_name}, Type: {type(audience_config)}")
+    
     logger.info(f"Rendering template with config: {global_config}")
     
     return render_template(

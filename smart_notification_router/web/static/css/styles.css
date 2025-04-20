@@ -1,14 +1,27 @@
 :root {
-    --primary-color: #03a9f4;
-    --secondary-color: #2196f3;
-    --accent-color: #ff9800;
-    --text-color: #212121;
-    --bg-color: #f5f5f5;
-    --card-color: #ffffff;
-    --error-color: #f44336;
-    --success-color: #4caf50;
-    --warning-color: #ff9800;
-    --info-color: #2196f3;
+    /* Home Assistant Colors */
+    --primary-color: var(--ha-primary-color, #03a9f4);
+    --secondary-color: var(--ha-secondary-color, #2196f3);
+    --accent-color: var(--ha-accent-color, #ff9800);
+    --text-color: var(--ha-text-color, #212121);
+    --bg-color: var(--ha-bg-color, #f5f5f5);
+    --card-color: var(--ha-card-color, #ffffff);
+    --error-color: var(--ha-error-color, #f44336);
+    --success-color: var(--ha-success-color, #4caf50);
+    --warning-color: var(--ha-warning-color, #ff9800);
+    --info-color: var(--ha-info-color, #2196f3);
+    
+    /* Fallback if HA variables not available */
+    --ha-primary-color: #03a9f4;
+    --ha-secondary-color: #2196f3;
+    --ha-accent-color: #ff9800;
+    --ha-text-color: #212121;
+    --ha-bg-color: #f5f5f5;
+    --ha-card-color: #ffffff;
+    --ha-error-color: #f44336;
+    --ha-success-color: #4caf50;
+    --ha-warning-color: #ff9800;
+    --ha-info-color: #2196f3;
 }
 
 * {
@@ -18,11 +31,14 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: var(--ha-font-family, Roboto, "Segoe UI", Helvetica, Arial, sans-serif);
     line-height: 1.6;
-    color: var(--text-color);
-    background-color: var(--bg-color);
+    color: var(--ha-text-color, var(--text-color));
+    background-color: var(--ha-background-color, var(--bg-color));
     padding: 20px;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .container {
@@ -129,40 +145,50 @@ label {
     flex: 2;
 }
 
-/* Buttons */
+/* Buttons - Home Assistant Style */
 button {
-    padding: 8px 15px;
+    padding: 8px 16px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
+    font-weight: 500;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+button:hover {
+    box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
 }
 
 .add-btn {
-    background-color: var(--info-color);
+    background-color: var(--ha-button-info-color, var(--info-color));
     color: white;
 }
 
 .remove-btn {
-    background-color: var(--error-color);
+    background-color: var(--ha-button-danger-color, var(--error-color));
     color: white;
     padding: 8px;
+    min-width: 36px;
 }
 
 .save-btn {
-    background-color: var(--success-color);
+    background-color: var(--ha-button-success-color, var(--success-color));
     color: white;
-    font-size: 16px;
+    font-size: 14px;
     padding: 10px 20px;
 }
 
 .test-btn {
-    background-color: var(--accent-color);
+    background-color: var(--ha-button-accent-color, var(--accent-color));
     color: white;
-    font-size: 16px;
+    font-size: 14px;
     padding: 10px 20px;
 }
 

@@ -6,6 +6,42 @@
     <title>Smart Notification Router</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css">
+    <style>
+        /* Home Assistant compatibility styles */
+        :root {
+            --ha-card-border-radius: 4px;
+            --ha-card-box-shadow: 0 2px 2px 0 rgba(0,0,0,.14),0 1px 5px 0 rgba(0,0,0,.12),0 3px 1px -2px rgba(0,0,0,.2);
+        }
+        
+        /* Display fix for object Object issues */
+        .audience-entry select option[value="[object Object]"] {
+            display: none;
+        }
+        
+        /* Make cards more HA styled */
+        .config-card, .status-card, .test-card {
+            border-radius: var(--ha-card-border-radius, 4px);
+            box-shadow: var(--ha-card-box-shadow, 0 2px 2px 0 rgba(0,0,0,.14),0 1px 5px 0 rgba(0,0,0,.12),0 3px 1px -2px rgba(0,0,0,.2));
+            background: var(--ha-card-background, var(--card-color));
+        }
+        
+        /* Improve form elements */
+        input[type="text"], textarea, select {
+            border-radius: 4px;
+            border: 1px solid var(--ha-form-border-color, #ddd);
+            padding: 8px 12px;
+            background: var(--ha-form-bg-color, white);
+            color: var(--ha-form-text-color, #212121);
+        }
+        
+        /* Improve button styles */
+        button {
+            background-color: var(--ha-button-primary-color, var(--primary-color));
+            color: var(--ha-button-text-color, white);
+            font-weight: 500;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -143,7 +179,62 @@
                 sendButton._hasClickListener = true;
                 sendButton.addEventListener('click', function() {
                     console.log('Send test button clicked');
-                    alert('Test notification functionality would be triggered here');
+                    
+                    const title = document.getElementById('test-title').value;
+                    const message = document.getElementById('test-message').value;
+                    const severity = document.getElementById('test-severity').value;
+                    
+                    const audienceChecks = document.querySelectorAll('input[name="test_audience"]:checked');
+                    const audience = Array.from(audienceChecks).map(check => check.value);
+                    
+                    if (!title || !message) {
+                        showTestResult('Please provide both title and message', false);
+                        return;
+                    }
+                    
+                    if (audience.length === 0) {
+                        showTestResult('Please select at least one audience', false);
+                        return;
+                    }
+                    
+                    // Define showTestResult if it's not available
+                    function showTestResult(message, success) {
+                        const resultDiv = document.getElementById('test-result');
+                        if (!resultDiv) return;
+                        
+                        resultDiv.textContent = message;
+                        resultDiv.className = success ? 'success-message' : 'error-message';
+                        resultDiv.classList.remove('hidden');
+                        
+                        setTimeout(() => {
+                            resultDiv.classList.add('hidden');
+                        }, 5000);
+                    }
+                    
+                    // Send the actual notification
+                    const payload = { title, message, severity, audience };
+                    
+                    fetch('/notify', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'ok') {
+                            showTestResult('Notification sent successfully!', true);
+                        } else if (data.status === 'duplicate') {
+                            showTestResult('Duplicate notification: ' + data.message, false);
+                        } else {
+                            showTestResult('Error: ' + data.message, false);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Failed to send test notification:', error);
+                        showTestResult('Failed to send notification: ' + error.message, false);
+                    });
                 });
             }
         });
