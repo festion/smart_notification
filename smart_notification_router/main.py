@@ -98,9 +98,21 @@ def get_hash(payload):
 @app.route("/")
 def index():
     """Web UI home page"""
+    # Ensure config has the expected structure
+    if not isinstance(config, dict):
+        logger.error(f"Invalid config type: {type(config)}. Setting to default.")
+        global_config = DEFAULT_CONFIG.copy()
+    elif not isinstance(config.get('audiences'), dict):
+        logger.error(f"Invalid audiences type: {type(config.get('audiences'))}. Setting to default.")
+        global_config = DEFAULT_CONFIG.copy()
+    else:
+        global_config = config
+
+    logger.info(f"Rendering template with config: {global_config}")
+    
     return render_template(
         "index.html", 
-        config=config,
+        config=global_config,
         deduplication_ttl=DEDUPLICATION_TTL
     )
 

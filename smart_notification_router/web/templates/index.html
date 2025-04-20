@@ -84,7 +84,7 @@
                 <div class="form-group">
                     <label>Audience</label>
                     <div id="test-audience-options">
-                        {% for name in config.audiences %}
+                        {% for name, audience in config.audiences.items() %}
                         <label class="checkbox-container">
                             <input type="checkbox" name="test_audience" value="{{ name }}">
                             <span class="checkbox-label">{{ name }}</span>
