@@ -22,6 +22,12 @@ RUN chmod a+x /run.sh
 
 # Install requirements
 WORKDIR /app
-RUN pip install --no-cache-dir -r requirements.txt
+RUN apt-get update && apt-get install -y \
+    python3-paho-mqtt \
+    python3-yaml \
+    python3-flask \
+    python3-requests \
+    python3-jinja2 \
+    && rm -rf /var/lib/apt/lists/*
 
 CMD [ "/run.sh" ]
