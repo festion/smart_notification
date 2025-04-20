@@ -73,6 +73,13 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.23
+- Fixed critical "unable to exec run: Permission denied" error with S6 service
+- Added dedicated script in cont-init.d to fix permissions at startup
+- Set explicit permissions for all service scripts in the Dockerfile
+- Added multiple permission checks and fixes at different stages of initialization
+- Improved permission handling for the run script
+
 ### v1.0.22
 - Fixed 502 Bad Gateway error when starting the addon
 - Added comprehensive error handling and logging in run.sh

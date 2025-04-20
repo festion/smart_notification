@@ -10,6 +10,11 @@ ARG BUILD_ARCH=amd64
 # Copy root filesystem
 COPY rootfs /
 
+# Immediately set execute permissions on critical scripts after copy
+RUN chmod -R 755 /etc/services.d
+RUN chmod -R 755 /etc/cont-init.d || true
+RUN chmod -R 755 /etc/cont-finish.d || true
+
 # Copy application files
 WORKDIR /app
 COPY main.py /app/
@@ -37,6 +42,19 @@ RUN pip3 install --no-cache-dir -r /app/requirements.txt || echo "Continuing wit
 RUN chmod a+x /app/run.sh
 RUN chmod -R 755 /app
 RUN chmod -R 755 /app/web
+
+# Ensure S6 scripts are executable (critical fix)
+RUN find /etc/services.d -type f -name run -exec chmod 755 {} \;
+RUN find /etc/services.d -type f -name finish -exec chmod 755 {} \; || true
+RUN find /etc/cont-init.d -type f -exec chmod 755 {} \; || true
+RUN find /etc/cont-finish.d -type f -exec chmod 755 {} \; || true
+
+# Explicitly check and set permissions for the run script
+RUN if [ -f "/etc/services.d/smart-notification/run" ]; then \
+    echo "Setting permissions for service script"; \
+    chmod 755 /etc/services.d/smart-notification/run; \
+    ls -la /etc/services.d/smart-notification/run; \
+fi
 
 # Set working directory and create config directory
 WORKDIR /app
