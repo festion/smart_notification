@@ -1,12 +1,54 @@
+# Smart Notification Router Configuration
+# ===================================
+#
+# This file defines:
+# - Audiences (targets) for notifications
+# - Severity levels for importance-based routing
+# - Rules for which notification methods to use
+
+# Audience definitions
+# Each audience represents a target or group of users
+# who receive notifications through specified services
 audiences:
+  # Mobile devices audience (phones, watches, etc.)
   mobile:
+    # List of notification services to trigger
     services:
       - notify.mobile_app_pixel_9_pro_xl
+      # - notify.mobile_app_iphone
+      # - notify.mobile_app_watch
+    # Minimum severity level to trigger this audience
     min_severity: high
+    # Optional description
+    description: "Mobile phone notifications"
 
+  # Home Assistant dashboard audience
   dashboard:
     services:
       - persistent_notification.create
     min_severity: low
+    description: "Home Assistant UI notifications"
 
-severity_levels: [low, medium, high, emergency]
+  # Example: Admin audience with multiple notification methods
+  # admin:
+  #   services:
+  #     - notify.mobile_app_admin_phone
+  #     - notify.admin_email
+  #     - notify.telegram
+  #   min_severity: medium
+  #   description: "System administrator notifications"
+  
+  # Example: Family audience
+  # family:
+  #   services:
+  #     - notify.mobile_app_family_group
+  #     - persistent_notification.create
+  #   min_severity: medium
+  #   description: "Family notifications"
+
+# Severity levels (in ascending order of importance)
+severity_levels: 
+  - low       # Informational only
+  - medium    # Attention recommended 
+  - high      # Attention required
+  - emergency # Immediate attention required

@@ -277,14 +277,55 @@ def notify():
 def get_services():
     """API endpoint to get available notification services from Home Assistant"""
     # In a real implementation, this would query the Home Assistant API
-    # For now, we'll return a dummy list
-    services = [
-        "notify.mobile_app_pixel_9_pro_xl",
-        "notify.telegram",
-        "persistent_notification.create",
-        "notify.smtp"
-    ]
-    return jsonify(services)
+    try:
+        # For now, we'll return a predefined list
+        # This would ideally fetch from Home Assistant API
+        services = {
+            "notify": [
+                # Mobile/companion apps
+                "notify.mobile_app_pixel_9_pro_xl",
+                "notify.mobile_app_iphone",
+                "notify.mobile_app_samsung_watch",
+                
+                # Other notification services
+                "notify.telegram",
+                "notify.email",
+                "notify.pushbullet",
+                "notify.smtp"
+            ],
+            "persistent": [
+                "persistent_notification.create"
+            ],
+            "media_player": [
+                # TTS/announce (future feature)
+                "media_player.living_room_speaker",
+                "media_player.kitchen_speaker"
+            ]
+        }
+        
+        # Add description of service types (for UI)
+        service_descriptions = {
+            "notify": "Push notifications to mobile devices, watches, and messaging platforms",
+            "persistent": "Display notifications in the Home Assistant UI",
+            "media_player": "Announce notifications through speakers (future feature)"
+        }
+        
+        return jsonify({
+            "services": services,
+            "descriptions": service_descriptions
+        })
+    except Exception as e:
+        logger.error(f"Error getting services: {e}")
+        return jsonify({
+            "services": {
+                "notify": ["notify.mobile_app"],
+                "persistent": ["persistent_notification.create"]
+            },
+            "descriptions": {
+                "notify": "Push notifications",
+                "persistent": "Home Assistant UI notifications"
+            }
+        })
 
 @app.route("/status")
 def status():
