@@ -73,6 +73,11 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.11
+- Fixed pip installation issue in modern Debian
+- Added --break-system-packages flag to pip installation
+- Added fallback mechanism for system-only packages
+
 ### v1.0.10
 - Fixed schema validation error for the audiences configuration
 - Reverted to using match(.*) for audience schema

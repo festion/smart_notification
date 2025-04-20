@@ -43,7 +43,8 @@ RUN apt-get update && apt-get install -y \
     python3-jinja2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install requirements from requirements.txt (fallback)
-RUN pip3 install --no-cache-dir -r requirements.txt
+# Install requirements from requirements.txt (with system packages override)
+RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt || \
+    echo "Continuing with system packages only"
 
 ENTRYPOINT ["/init"]
