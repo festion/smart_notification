@@ -73,6 +73,11 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.15
+- Fixed "manifest unknown" error during installation
+- Switched to official homeassistant base images
+- Changed Docker image source for better compatibility
+
 ### v1.0.14
 - Complete overhaul of Docker and S6 configuration
 - Switched to python-specific base image
