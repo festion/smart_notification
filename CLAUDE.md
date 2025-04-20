@@ -73,6 +73,13 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.4
+- Fixed repository icon by adding proper reference in repository.json
+- Corrected hacs.json filename (was incorrectly named hacs.jason)
+
+### v1.0.3
+- Version bump for stability improvements
+
 ### v1.0.2
 - Updated repository structure to match Home Assistant add-on requirements
 - Renamed add-on directory to smart_notification_router for clarity
