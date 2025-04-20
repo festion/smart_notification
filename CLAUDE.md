@@ -73,6 +73,13 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.18
+- Fixed Docker image format issues
+- Created separate start.sh script for proper execution
+- Fixed Home Assistant add-on Docker build requirements
+- Used valid Docker image format in build.json
+- Added explicit file-based startup script
+
 ### v1.0.17
 - Completely rebuilt container using official Python Alpine image
 - Removed all S6 overlay dependencies to fix PID 1 issues
