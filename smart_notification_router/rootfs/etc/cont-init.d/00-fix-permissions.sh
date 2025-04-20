@@ -1,11 +1,11 @@
-#!/usr/bin/with-contenv bashio
+#!/bin/bash
 
 # ========================================================================
 # Fix script permissions at container startup
 # This script runs early in the boot process to ensure proper permissions
 # ========================================================================
 
-bashio::log.info "Setting correct permissions for S6 scripts..."
+echo "[INFO] Setting correct permissions for S6 scripts..."
 
 # Fix permission issue with run scripts
 find /etc/services.d -type f -name "run" -exec chmod 755 {} \;
@@ -15,17 +15,17 @@ find /etc/cont-finish.d -type f -exec chmod 755 {} \; || true
 
 # Specific check for the smart-notification service
 if [[ -f /etc/services.d/smart-notification/run ]]; then
-    bashio::log.info "Setting permissions for smart-notification service..."
+    echo "[INFO] Setting permissions for smart-notification service..."
     chmod 755 /etc/services.d/smart-notification/run
     ls -la /etc/services.d/smart-notification/run
 else
-    bashio::log.warning "smart-notification run script not found!"
+    echo "[WARNING] smart-notification run script not found!"
     find /etc/services.d -type d | sort
 fi
 
 # Check app directory permissions
 if [[ -d /app ]]; then
-    bashio::log.info "Setting permissions for app directory..."
+    echo "[INFO] Setting permissions for app directory..."
     chmod -R 755 /app
     chmod 755 /app/run.sh
 fi
@@ -36,4 +36,4 @@ if [[ -f /app/run.sh ]]; then
     ls -la /app/run.sh
 fi
 
-bashio::log.info "Permission fixes applied"
+echo "[INFO] Permission fixes applied"

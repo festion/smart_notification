@@ -1,35 +1,35 @@
-#!/usr/bin/with-contenv bashio
+#!/bin/bash
 
 # ==============================================================================
 # Smart Notification Router
 # ==============================================================================
-bashio::log.info "Starting Smart Notification Router..."
+echo "[INFO] Starting Smart Notification Router..."
 
 # Ensure we have all the directories we need
-bashio::log.info "Setting up directories..."
+echo "[INFO] Setting up directories..."
 mkdir -p /config /data
 chmod 777 /config
 
 # List environment for debugging
-bashio::log.debug "Environment variables:"
+echo "[DEBUG] Environment variables:"
 env | grep -v TOKEN | sort
 
 # Verify Python is available
-bashio::log.info "Checking Python installation..."
+echo "[INFO] Checking Python installation..."
 if ! command -v python3 &> /dev/null; then
-    bashio::log.error "Python3 is not installed or not in PATH"
+    echo "[ERROR] Python3 is not installed or not in PATH"
     exit 1
 fi
 
 # Verify required Python packages
-bashio::log.info "Checking Python packages..."
+echo "[INFO] Checking Python packages..."
 python3 -c "import flask, yaml" || {
-    bashio::log.error "Required Python packages are missing. Trying to install..."
+    echo "[ERROR] Required Python packages are missing. Trying to install..."
     pip3 install --no-cache-dir flask pyyaml
 }
 
 # Generate configuration from the add-on options
-bashio::log.info "Generating configuration file from add-on options..."
+echo "[INFO] Generating configuration file from add-on options..."
 
 python3 -c "
 import json
@@ -81,26 +81,26 @@ except Exception as e:
 "
 
 # Check if the application directory exists
-bashio::log.info "Checking application directory..."
+echo "[INFO] Checking application directory..."
 if [ ! -d "/app" ]; then
-    bashio::log.error "Application directory /app does not exist"
+    echo "[ERROR] Application directory /app does not exist"
     exit 1
 fi
 
 # Check if the main script exists
 if [ ! -f "/app/main.py" ]; then
-    bashio::log.error "Main script /app/main.py does not exist"
+    echo "[ERROR] Main script /app/main.py does not exist"
     exit 1
 fi
 
 # Check permissions
-bashio::log.info "Checking permissions..."
+echo "[INFO] Checking permissions..."
 if [ ! -r "/app/main.py" ]; then
-    bashio::log.error "Main script /app/main.py is not readable"
-    chmod a+r /app/main.py || bashio::log.warning "Could not fix permissions"
+    echo "[ERROR] Main script /app/main.py is not readable"
+    chmod a+r /app/main.py || echo "[WARNING] Could not fix permissions"
 fi
 
 # Start the application
-bashio::log.info "Starting Flask application..."
+echo "[INFO] Starting Flask application..."
 cd /app
 exec python3 /app/main.py

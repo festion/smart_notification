@@ -73,6 +73,13 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.24
+- Fixed "unable to exec bashio: No such file or directory" error
+- Replaced bashio with standard bash scripts to avoid dependency issues
+- Updated run.sh to use standard shell commands instead of bashio functions
+- Modified S6 service scripts to use regular bash
+- Fixed permission script to be compatible with the base image
+
 ### v1.0.23
 - Fixed critical "unable to exec run: Permission denied" error with S6 service
 - Added dedicated script in cont-init.d to fix permissions at startup
