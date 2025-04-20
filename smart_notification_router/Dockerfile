@@ -7,6 +7,8 @@ ENV LANG C.UTF-8
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
+    python3-setuptools \
+    python3-wheel \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy root filesystem
@@ -24,6 +26,13 @@ COPY web /app/web/
 RUN chmod a+x /run.sh
 RUN chmod a+x /etc/services.d/smart-notification/run
 
+# Create config directory if it doesn't exist
+RUN mkdir -p /config
+
+# Set directory permissions
+RUN chmod -R 755 /app
+RUN chmod -R 777 /config
+
 # Install requirements
 WORKDIR /app
 RUN apt-get update && apt-get install -y \
@@ -33,5 +42,8 @@ RUN apt-get update && apt-get install -y \
     python3-requests \
     python3-jinja2 \
     && rm -rf /var/lib/apt/lists/*
+
+# Install requirements from requirements.txt (fallback)
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 ENTRYPOINT ["/init"]

@@ -73,6 +73,13 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.7
+- Added Home Assistant API integration settings in config.json
+- Added `ingress_entry` parameter to improve Ingress functionality
+- Improved Dockerfile with proper permissions and dependencies
+- Added fallback pip installation for requirements
+- Fixed directories permission issues
+
 ### v1.0.6
 - Fixed schema validation error in config.json (properly defined the audience schema)
 - Created new icon files and fixed repository icon path
