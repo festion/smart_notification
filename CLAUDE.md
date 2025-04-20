@@ -73,6 +73,11 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.10
+- Fixed schema validation error for the audiences configuration
+- Reverted to using match(.*) for audience schema
+- Simplified schema to ensure compatibility with Home Assistant
+
 ### v1.0.9
 - Reverted repository.json to working structure from v1.0.5
 - Simplified add-on configuration to restore visibility in the Add-on Store
