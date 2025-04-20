@@ -37,9 +37,31 @@
         /* Improve button styles */
         button {
             background-color: var(--ha-button-primary-color, var(--primary-color));
-            color: var(--ha-button-text-color, white);
+            color: var(--ha-button-text-color, white) !important;
             font-weight: 500;
             border-radius: 4px;
+        }
+        
+        /* Fix text contrast issues */
+        body {
+            color: #333333 !important;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            color: #212121 !important;
+        }
+        
+        input, select, textarea {
+            color: #212121 !important;
+            background: white !important;
+        }
+        
+        label, p, .hint {
+            color: #333333 !important;
+        }
+        
+        .config-card, .status-card, .test-card {
+            background: white !important;
         }
     </style>
 </head>

@@ -44,12 +44,34 @@ app = Flask(__name__,
 
 def load_options():
     """Load options from the add-on configuration"""
-    global DEDUPLICATION_TTL
+    global DEDUPLICATION_TTL, config
     try:
         if os.path.exists(OPTIONS_FILE):
             with open(OPTIONS_FILE, "r") as f:
                 options = json.load(f)
+                
+                # Set deduplication TTL
                 DEDUPLICATION_TTL = options.get("deduplication_ttl", 300)
+                
+                # Handle audiences if present in options
+                if "audiences" in options:
+                    logger.debug(f"Found audiences in options: {type(options['audiences'])}")
+                    
+                    # If the options file has audiences as a dictionary, use it to update config
+                    if isinstance(options["audiences"], dict):
+                        if "audiences" not in config or not isinstance(config["audiences"], dict):
+                            config["audiences"] = {}
+                            
+                        # Update each audience from options
+                        for audience_name, audience_data in options["audiences"].items():
+                            if isinstance(audience_data, dict):
+                                config["audiences"][audience_name] = audience_data
+                                logger.debug(f"Added audience from options: {audience_name}")
+                
+                # Handle severity levels if present
+                if "severity_levels" in options and isinstance(options["severity_levels"], list):
+                    config["severity_levels"] = options["severity_levels"]
+                    
                 return options
         return {}
     except Exception as e:
