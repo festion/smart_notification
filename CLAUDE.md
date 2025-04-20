@@ -73,6 +73,13 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.17
+- Completely rebuilt container using official Python Alpine image
+- Removed all S6 overlay dependencies to fix PID 1 issues
+- Implemented standalone startup script with configuration generation
+- Simplified container to a single process application
+- Added direct execution of Python application
+
 ### v1.0.16
 - Fixed Alpine Linux compatibility issues
 - Switched from apt-get to apk for package installation
