@@ -1,8 +1,8 @@
 {
   "name": "Smart Notification Router",
-  "version": "0.1.1",
+  "version": "1.0.3",
   "slug": "smart_notification_router",
-  "description": "Routes Home Assistant notifications by severity and audience.",
+  "description": "Flexible notification routing with severity, audience, and deduplication",
   "startup": "application",
   "boot": "auto",
   "ingress": true,
@@ -12,15 +12,28 @@
   "arch": ["amd64", "armv7", "aarch64"],
   "map": ["config:rw"],
   "options": {
+    "deduplication_ttl": 300,
     "audiences": {
-      "admin": {
+      "mobile": {
         "services": ["notify.mobile_app_pixel_9_pro_xl"],
-        "min_severity": "medium"
+        "min_severity": "high"
+      },
+      "dashboard": {
+        "services": ["persistent_notification.create"],
+        "min_severity": "low"
       }
-    }
+    },
+    "severity_levels": ["low", "medium", "high", "emergency"]
   },
   "schema": {
-    "audiences": "match(^\\{.*\\}$)"
+    "deduplication_ttl": "int(60,3600)",
+    "audiences": {
+      "str?": {
+        "services": ["str"],
+        "min_severity": "str"
+      }
+    },
+    "severity_levels": ["str"]
   },
   "image": "ghcr.io/festion/smart_notification_router-{arch}"
 }
