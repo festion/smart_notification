@@ -98,6 +98,55 @@
             </div>
         </section>
     </div>
+    <script>
+        console.log('HTML template loaded successfully');
+    </script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        // Fallback script to ensure UI initialization
+        window.addEventListener('load', function() {
+            console.log('Window fully loaded - checking if UI was initialized');
+            
+            // Add audience button
+            const addButton = document.getElementById('add-audience');
+            if (addButton && !addButton._hasClickListener) {
+                console.log('Reinitializing add audience button');
+                addButton._hasClickListener = true;
+                addButton.addEventListener('click', function() {
+                    console.log('Add audience button clicked');
+                    const container = document.getElementById('audiences-container');
+                    const severityLevels = document.getElementById('severity-levels').value
+                        .split(',')
+                        .map(level => level.trim())
+                        .filter(level => level !== '');
+                        
+                    // Create a simple audience entry
+                    const entry = document.createElement('div');
+                    entry.className = 'audience-entry';
+                    entry.innerHTML = `
+                        <input type="text" name="audience_name" class="audience-name" placeholder="Audience Name" value="">
+                        <select name="audience_severity" class="audience-severity">
+                            ${severityLevels.map(level => `<option value="${level}">${level}</option>`).join('')}
+                        </select>
+                        <input type="text" name="audience_services" class="audience-services" placeholder="notify.service1, notify.service2" value="">
+                        <button type="button" class="remove-btn"><i class="mdi mdi-delete"></i></button>
+                    `;
+                    
+                    container.appendChild(entry);
+                });
+            }
+            
+            // Send test button
+            const sendButton = document.getElementById('send-test');
+            if (sendButton && !sendButton._hasClickListener) {
+                console.log('Reinitializing send test button');
+                sendButton._hasClickListener = true;
+                sendButton.addEventListener('click', function() {
+                    console.log('Send test button clicked');
+                    alert('Test notification functionality would be triggered here');
+                });
+            }
+        });
+    </script>
 </body>
 </html>

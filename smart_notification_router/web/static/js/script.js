@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM fully loaded - initializing UI...');
+    
     // Check service status
     checkStatus();
     
@@ -8,6 +10,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Poll status every 30 seconds
     setInterval(checkStatus, 30000);
+    
+    // Log that initialization is complete
+    console.log('UI initialization complete');
 });
 
 function checkStatus() {
@@ -106,7 +111,15 @@ function addAudienceEntry(name = '', severity = '', services = []) {
     servicesInput.name = 'audience_services';
     servicesInput.className = 'audience-services';
     servicesInput.placeholder = 'notify.service1, notify.service2';
-    servicesInput.value = services.join(', ');
+    
+    // Handle both string and array formats for services
+    if (Array.isArray(services)) {
+        servicesInput.value = services.join(', ');
+    } else if (typeof services === 'string') {
+        servicesInput.value = services;
+    } else {
+        servicesInput.value = '';
+    }
     
     // Create remove button
     const removeButton = document.createElement('button');
