@@ -1,44 +1,19 @@
-FROM ghcr.io/hassio-addons/base:12.2.7
+ARG BUILD_FROM
+FROM $BUILD_FROM
 
 ENV LANG C.UTF-8
 
-# Install required packages
-RUN apk add --no-cache \
-    bash \
-    jq \
+# Install necessary packages
+RUN apt-get update && apt-get install -y \
     python3 \
-    py3-pip \
-    nginx \
-    curl \
-    unzip
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /usr/lib/bashio \
- && curl -sSL https://github.com/hassio-addons/bashio/archive/refs/heads/main.zip -o /tmp/bashio.zip \
- && unzip /tmp/bashio.zip -d /tmp \
- && mv /tmp/bashio-main/lib/* /usr/lib/bashio/ \
- && rm -rf /tmp/bashio.zip /tmp/bashio-main
-
-# Copy root filesystem
-COPY rootfs /
-
-# Copy app files
-COPY main.py /app/
+# Copy add-on files
 COPY run.sh /
-COPY requirements.txt /app/
-COPY web /app/web/
-COPY notification_config.yaml /app/
+COPY app /app
 
-# Fix any potential line ending issues
-RUN sed -i 's/\r$//' /run.sh && \
-    chmod a+x /run.sh
+# Set permissions
+RUN chmod a+x /run.sh
 
-# Install Python requirements
-WORKDIR /app
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-# Make sure bash is the shell used
-SHELL ["/bin/bash", "-c"]
-
-# Set the entry point
-ENTRYPOINT ["/bin/bash"]
-CMD ["/run.sh"]
+CMD [ "/run.sh" ]
