@@ -11,9 +11,17 @@ RUN apt-get update && apt-get install -y \
 
 # Copy add-on files
 COPY run.sh /
-COPY app /app
+RUN mkdir -p /app
+COPY main.py /app/
+COPY notification_config.yaml /app/
+COPY requirements.txt /app/
+COPY web /app/web/
 
 # Set permissions
 RUN chmod a+x /run.sh
+
+# Install requirements
+WORKDIR /app
+RUN pip install --no-cache-dir -r requirements.txt
 
 CMD [ "/run.sh" ]
