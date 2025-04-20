@@ -7,12 +7,11 @@ ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2
 ENV S6_CMD_WAIT_FOR_SERVICES=1
 
 # Install necessary packages
-RUN apt-get update && apt-get install -y \
+RUN apk add --no-cache \
     python3 \
-    python3-pip \
-    python3-setuptools \
-    python3-wheel \
-    && rm -rf /var/lib/apt/lists/*
+    py3-pip \
+    py3-setuptools \
+    py3-wheel
 
 # Copy add-on files
 RUN mkdir -p /app
@@ -30,16 +29,14 @@ RUN chmod -R 777 /config
 
 # Install requirements
 WORKDIR /app
-RUN apt-get update && apt-get install -y \
-    python3-paho-mqtt \
-    python3-yaml \
-    python3-flask \
-    python3-requests \
-    python3-jinja2 \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache \
+    py3-yaml \
+    py3-flask \
+    py3-requests \
+    py3-jinja2
 
-# Install requirements from requirements.txt (with system packages override)
-RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt || \
+# Install requirements from requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt || \
     echo "Continuing with system packages only"
 
 # Copy root filesystem (S6 overlay)

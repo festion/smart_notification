@@ -73,6 +73,13 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.16
+- Fixed Alpine Linux compatibility issues
+- Switched from apt-get to apk for package installation
+- Updated Python package names for Alpine
+- Removed --break-system-packages flag (not needed in Alpine)
+- Fixed package installation commands for Alpine Linux base
+
 ### v1.0.15
 - Fixed "manifest unknown" error during installation
 - Switched to official homeassistant base images
