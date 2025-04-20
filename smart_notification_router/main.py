@@ -69,6 +69,7 @@ def load_config():
                     return config
         else:
             # If config file doesn't exist, create it with defaults
+            os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
             with open(CONFIG_FILE, "w") as f:
                 yaml.dump(DEFAULT_CONFIG, f, default_flow_style=False)
             logger.info("Created default configuration file")
@@ -80,6 +81,7 @@ def load_config():
 def save_config():
     """Save notification configuration"""
     try:
+        os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
         with open(CONFIG_FILE, "w") as f:
             yaml.dump(config, f, default_flow_style=False)
         logger.info("Configuration saved successfully")
@@ -241,4 +243,6 @@ if __name__ == "__main__":
     threading.Thread(target=cleanup_thread, daemon=True).start()
     
     # Start the application
-    app.run(host="0.0.0.0", port=8080)
+    logger.info("Starting Flask application on 0.0.0.0:8080")
+    # Use Debug mode for better error reporting during development
+    app.run(host="0.0.0.0", port=8080, debug=True)

@@ -73,6 +73,15 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.22
+- Fixed 502 Bad Gateway error when starting the addon
+- Added comprehensive error handling and logging in run.sh
+- Enhanced Flask application configuration with debug mode
+- Fixed directory and file permissions issues
+- Added missing Python dependencies required by Flask
+- Improved S6 service script with better error detection
+- Added directory existence checks and creation with proper permissions
+
 ### v1.0.21
 - Switched to community add-on base image (ghcr.io/hassio-addons/base:12.2.7)
 - Removed custom S6 overlay configuration in favor of add-on base image

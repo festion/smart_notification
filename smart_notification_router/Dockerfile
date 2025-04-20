@@ -25,14 +25,27 @@ RUN apk add --no-cache \
     py3-yaml \
     py3-flask \
     py3-requests \
-    py3-jinja2
+    py3-jinja2 \
+    py3-werkzeug \
+    py3-itsdangerous \
+    py3-markupsafe
 
 # Install any remaining requirements
 RUN pip3 install --no-cache-dir -r /app/requirements.txt || echo "Continuing with system packages"
 
 # Make scripts executable
 RUN chmod a+x /app/run.sh
+RUN chmod -R 755 /app
+RUN chmod -R 755 /app/web
 
 # Set working directory and create config directory
 WORKDIR /app
 RUN mkdir -p /config && chmod 777 /config
+
+# For debugging
+RUN echo "Flask app is in $(pwd)" && \
+    ls -la /app && \
+    ls -la /app/web && \
+    ls -la /app/web/static && \
+    ls -la /app/web/templates && \
+    python3 -m flask --version

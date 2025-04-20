@@ -1,11 +1,24 @@
 #!/usr/bin/with-contenv bashio
 # ==============================================================================
 # Start the smart notification service
+# s6-overlay service for Home Assistant Add-on
 # ==============================================================================
 
-# Change to the app directory
-cd /app || bashio::exit.nok "Could not change to app directory"
+# Set up logging
+bashio::log.info "Starting Smart Notification Router service..."
 
-# Run the start script
-bashio::log.info "Starting Smart Notification Router..."
+# Verify script location
+if [ ! -f "/app/run.sh" ]; then
+    bashio::log.error "Run script not found at /app/run.sh"
+    find /app -type f -name "*.sh" | sort
+    find / -name "run.sh" -type f | sort
+    exit 1
+fi
+
+# Show permissions
+bashio::log.debug "Script permissions:"
+ls -la /app/run.sh
+
+# Execute with full error handling
+bashio::log.info "Executing run.sh"
 exec /app/run.sh
