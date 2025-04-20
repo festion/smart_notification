@@ -25,6 +25,7 @@ COPY web /app/web/
 # Set permissions
 RUN chmod a+x /run.sh
 RUN chmod a+x /etc/services.d/smart-notification/run
+RUN chmod +x /init
 
 # Create config directory if it doesn't exist
 RUN mkdir -p /config

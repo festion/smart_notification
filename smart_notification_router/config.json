@@ -1,6 +1,6 @@
 {
   "name": "Smart Notification Router",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "slug": "smart_notification_router",
   "description": "Flexible notification routing with severity, audience, and deduplication",
   "startup": "application",
@@ -11,6 +11,7 @@
   "panel_title": "Notification Router",
   "arch": ["amd64", "armv7", "aarch64"],
   "map": ["config:rw"],
+  "image": "ghcr.io/festion/smart_notification_router-{arch}",
   "options": {
     "deduplication_ttl": 300,
     "audiences": {

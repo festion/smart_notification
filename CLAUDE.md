@@ -73,6 +73,13 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.12
+- Fixed S6 overlay issues with process initialization
+- Added pre-built Docker image support to avoid local builds
+- Improved S6 service script with better error handling
+- Added default configuration when options file is missing
+- Added S6 behavior settings for better container stability
+
 ### v1.0.11
 - Fixed pip installation issue in modern Debian
 - Added --break-system-packages flag to pip installation

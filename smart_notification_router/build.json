@@ -5,6 +5,8 @@
     "aarch64": "ghcr.io/home-assistant/aarch64-base-debian:bookworm"
   },
   "args": {
-    "BUILD_ARCH": "{arch}"
+    "BUILD_ARCH": "{arch}",
+    "S6_LOGGING": "0",
+    "S6_BEHAVIOUR_IF_STAGE2_FAILS": "2"
   }
 }
