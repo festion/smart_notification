@@ -64,6 +64,27 @@ def load_config():
             with open(CONFIG_FILE, "r") as f:
                 loaded_config = yaml.safe_load(f)
                 if loaded_config:
+                    # Validate and fix the config structure if needed
+                    if not isinstance(loaded_config, dict):
+                        logger.error(f"Invalid config format - not a dictionary: {type(loaded_config)}")
+                        return DEFAULT_CONFIG
+                    
+                    # Ensure audiences is a dictionary
+                    if "audiences" not in loaded_config:
+                        logger.warning("No audiences in config, using defaults")
+                        loaded_config["audiences"] = DEFAULT_CONFIG["audiences"]
+                    elif not isinstance(loaded_config["audiences"], dict):
+                        logger.warning(f"Invalid audiences format: {type(loaded_config['audiences'])}, using defaults")
+                        loaded_config["audiences"] = DEFAULT_CONFIG["audiences"]
+                    
+                    # Ensure severity_levels is a list
+                    if "severity_levels" not in loaded_config:
+                        logger.warning("No severity levels in config, using defaults")
+                        loaded_config["severity_levels"] = DEFAULT_CONFIG["severity_levels"]
+                    elif not isinstance(loaded_config["severity_levels"], list):
+                        logger.warning(f"Invalid severity_levels format: {type(loaded_config['severity_levels'])}, using defaults")
+                        loaded_config["severity_levels"] = DEFAULT_CONFIG["severity_levels"]
+                    
                     config = loaded_config
                     logger.info("Configuration loaded successfully")
                     return config
@@ -98,29 +119,24 @@ def get_hash(payload):
 @app.route("/")
 def index():
     """Web UI home page"""
-    # Ensure config has the expected structure
-    if not isinstance(config, dict):
-        logger.error(f"Invalid config type: {type(config)}. Setting to default.")
-        global_config = DEFAULT_CONFIG.copy()
-    elif not isinstance(config.get('audiences'), dict):
-        logger.error(f"Invalid audiences type: {type(config.get('audiences'))}. Setting to default.")
-        global_config = DEFAULT_CONFIG.copy()
-    else:
-        global_config = config
+    # The load_config function now validates and fixes the configuration
+    # So we can use it directly without additional checks here
+    current_config = load_config()
     
-    # Debug and log the config structure to help diagnose issues
-    logger.info(f"Config structure: {type(global_config)}")
-    for key, value in global_config.items():
-        logger.info(f"Key: {key}, Type: {type(value)}")
-        if key == "audiences" and isinstance(value, dict):
-            for audience_name, audience_config in value.items():
-                logger.info(f"  Audience: {audience_name}, Type: {type(audience_config)}")
+    # Only log detailed debug information if requested
+    if os.environ.get('DEBUG_CONFIG', '').lower() in ('true', '1', 'yes', 'on'):
+        logger.info(f"Config structure: {type(current_config)}")
+        for key, value in current_config.items():
+            logger.info(f"Key: {key}, Type: {type(value)}")
+            if key == "audiences" and isinstance(value, dict):
+                for audience_name, audience_config in value.items():
+                    logger.info(f"  Audience: {audience_name}, Type: {type(audience_config)}")
     
-    logger.info(f"Rendering template with config: {global_config}")
+    logger.debug(f"Rendering template with configured audiences: {list(current_config.get('audiences', {}).keys())}")
     
     return render_template(
         "index.html", 
-        config=global_config,
+        config=current_config,
         deduplication_ttl=DEDUPLICATION_TTL
     )
 
