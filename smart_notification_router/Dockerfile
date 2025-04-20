@@ -38,10 +38,13 @@ RUN apk add --no-cache \
 # Install any remaining requirements
 RUN pip3 install --no-cache-dir -r /app/requirements.txt || echo "Continuing with system packages"
 
-# Make scripts executable
-RUN chmod a+x /app/run.sh
-RUN chmod -R 755 /app
-RUN chmod -R 755 /app/web
+# Fix line endings and make scripts executable
+RUN sed -i 's/\r$//' /app/run.sh && \
+    chmod a+x /app/run.sh && \
+    find /app -type f -name "*.sh" -exec sed -i 's/\r$//' {} \; && \
+    find /app -type f -name "*.py" -exec sed -i 's/\r$//' {} \; && \
+    chmod -R 755 /app && \
+    chmod -R 755 /app/web
 
 # Ensure S6 scripts are executable (critical fix)
 RUN find /etc/services.d -type f -name run -exec chmod 755 {} \;

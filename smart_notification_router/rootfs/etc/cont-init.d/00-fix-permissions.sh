@@ -7,11 +7,17 @@
 
 echo "[INFO] Setting correct permissions for S6 scripts..."
 
-# Fix permission issue with run scripts
-find /etc/services.d -type f -name "run" -exec chmod 755 {} \;
-find /etc/services.d -type f -name "finish" -exec chmod 755 {} \; || true
-find /etc/cont-init.d -type f -exec chmod 755 {} \; || true
-find /etc/cont-finish.d -type f -exec chmod 755 {} \; || true
+# Fix line endings and permissions for all scripts
+echo "[INFO] Fixing line endings for scripts..."
+find /etc/services.d -type f -name "run" -exec sed -i 's/\r$//' {} \; -exec chmod 755 {} \;
+find /etc/services.d -type f -name "finish" -exec sed -i 's/\r$//' {} \; -exec chmod 755 {} \; || true
+find /etc/cont-init.d -type f -exec sed -i 's/\r$//' {} \; -exec chmod 755 {} \; || true
+find /etc/cont-finish.d -type f -exec sed -i 's/\r$//' {} \; -exec chmod 755 {} \; || true
+
+# Fix line endings on application scripts
+echo "[INFO] Fixing line endings for application scripts..."
+find /app -type f -name "*.sh" -exec sed -i 's/\r$//' {} \; -exec chmod 755 {} \; || true
+find /app -type f -name "*.py" -exec sed -i 's/\r$//' {} \; -exec chmod 755 {} \; || true
 
 # Specific check for the smart-notification service
 if [[ -f /etc/services.d/smart-notification/run ]]; then

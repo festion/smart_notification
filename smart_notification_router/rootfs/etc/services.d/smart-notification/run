@@ -15,10 +15,18 @@ if [ ! -f "/app/run.sh" ]; then
     exit 1
 fi
 
+# Fix line endings if needed
+echo "[INFO] Fixing line endings for run.sh..."
+sed -i 's/\r$//' /app/run.sh
+
 # Show permissions
 echo "[DEBUG] Script permissions:"
 ls -la /app/run.sh
 
+# Check if script has a valid shebang line
+echo "[INFO] Checking script shebang line:"
+head -n 1 /app/run.sh
+
 # Execute with full error handling
 echo "[INFO] Executing run.sh"
-exec /app/run.sh
+exec /bin/bash /app/run.sh
