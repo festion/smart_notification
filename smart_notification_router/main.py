@@ -166,9 +166,18 @@ def update_config():
 def notify():
     """API endpoint to receive notifications"""
     try:
-        payload = request.get_json()
-        if not payload:
-            return jsonify({"status": "error", "message": "Invalid JSON payload"}), 400
+        # Try to parse JSON with more detailed error handling
+        try:
+            payload = request.get_json()
+            if not payload:
+                if request.data:
+                    logger.error(f"Invalid JSON payload: {request.data[:100]}...")
+                    return jsonify({"status": "error", "message": "Invalid JSON format"}), 400
+                else:
+                    return jsonify({"status": "error", "message": "Empty JSON payload"}), 400
+        except Exception as json_err:
+            logger.error(f"JSON parsing error: {json_err}, Data: {request.data[:100]}...")
+            return jsonify({"status": "error", "message": f"JSON parsing error: {json_err}"}), 400
             
         # Check required fields
         required_fields = ["title", "message", "severity"]
@@ -189,7 +198,27 @@ def notify():
         title = payload.get("title")
         message = payload.get("message")
         severity = payload.get("severity")
+        
+        # Check audience format and convert to list if needed
         audience = payload.get("audience", [])
+        if isinstance(audience, str):
+            try:
+                # Try to convert from JSON string if it came that way
+                import json
+                parsed_audience = json.loads(audience)
+                if isinstance(parsed_audience, list):
+                    audience = parsed_audience
+                else:
+                    # If it's a single string name, treat it as a single-item list
+                    audience = [audience]
+            except:
+                # If it's not valid JSON, treat it as a single string name
+                audience = [audience]
+        elif not isinstance(audience, list):
+            # If it's some other type, convert to string and use as single item
+            audience = [str(audience)]
+            
+        logger.info(f"Notification received - Title: {title}, Severity: {severity}, Audience: {audience}")
 
         # Update sent messages
         SENT_MESSAGES[message_id] = now
@@ -200,20 +229,29 @@ def notify():
                 del SENT_MESSAGES[msg_id]
 
         # Route notifications
+        routed_count = 0
         for target in audience:
-            target_config = current_config["audiences"].get(target, {})
-            min_severity = target_config.get("min_severity", "low")
-            
-            try:
-                if current_config["severity_levels"].index(severity) >= current_config["severity_levels"].index(min_severity):
-                    for service in target_config.get("services", []):
-                        logger.info(f"[{target.upper()}] {service} -> {title}: {message}")
-                        # Here would be the actual notification sending logic
-                        # This would integrate with Home Assistant API
-            except ValueError:
-                logger.error(f"Invalid severity level: {severity}")
+            if target in current_config["audiences"]:
+                target_config = current_config["audiences"].get(target, {})
+                min_severity = target_config.get("min_severity", "low")
+                
+                try:
+                    if current_config["severity_levels"].index(severity) >= current_config["severity_levels"].index(min_severity):
+                        for service in target_config.get("services", []):
+                            logger.info(f"[{target.upper()}] {service} -> {title}: {message}")
+                            # Here would be the actual notification sending logic
+                            # This would integrate with Home Assistant API
+                            routed_count += 1
+                except ValueError:
+                    logger.error(f"Invalid severity level: {severity}")
+            else:
+                logger.warning(f"Unknown audience: {target}")
 
-        return jsonify({"status": "ok", "message": "Notification routed"}), 200
+        return jsonify({
+            "status": "ok", 
+            "message": f"Notification routed to {routed_count} services",
+            "routed_count": routed_count
+        }), 200
         
     except Exception as e:
         logger.error(f"Error processing notification: {e}")
