@@ -1,62 +1,26 @@
 {
   "name": "Smart Notification Router",
-  "version": "1.0.2",
+  "version": "0.1.0",
   "slug": "smart_notification_router",
-  "description": "Flexible notification routing with severity, audience, and deduplication",
-  "url": "https://github.com/festion/smart_notification",
-  "arch": [
-    "armhf",
-    "armv7",
-    "aarch64",
-    "amd64",
-    "i386"
-  ],
+  "description": "Routes Home Assistant notifications by severity and audience.",
   "startup": "application",
   "boot": "auto",
-  "init": false,
-  "map": [
-    "config:rw"
-  ],
+  "ingress": true,
+  "ingress_port": 8080,
+  "panel_icon": "mdi:message-alert",
+  "panel_title": "Notification Router",
+  "arch": ["amd64", "armv7", "aarch64"],
+  "map": ["config:rw"],
   "options": {
-    "deduplication_ttl": 300,
     "audiences": {
-      "mobile": {
-        "services": [
-          "notify.mobile_app_pixel_9_pro_xl"
-        ],
-        "min_severity": "high"
-      },
-      "dashboard": {
-        "services": [
-          "persistent_notification.create"
-        ],
-        "min_severity": "low"
+      "admin": {
+        "services": ["notify.mobile_app_pixel_9_pro_xl"],
+        "min_severity": "medium"
       }
-    },
-    "severity_levels": [
-      "low",
-      "medium",
-      "high",
-      "emergency"
-    ]
+    }
   },
   "schema": {
-    "deduplication_ttl": "int(60,3600)",
-    "audiences": {
-      "str?": {
-        "services": [
-          "str"
-        ],
-        "min_severity": "str"
-      }
-    },
-    "severity_levels": [
-      "str"
-    ]
+    "audiences": "dict(str?@services=list(str), min_severity=str)"
   },
-  "hassio_api": true,
-  "hassio_role": "default",
-  "homeassistant_api": true,
-  "panel_icon": "mdi:bell-ring",
-  "panel_title": "Smart Notifications"
+  "image": "ghcr.io/festion/smart_notification_router-{arch}"
 }
