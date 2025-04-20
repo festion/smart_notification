@@ -27,12 +27,7 @@
   },
   "schema": {
     "deduplication_ttl": "int(60,3600)",
-    "audiences": {
-      "str?": {
-        "services": ["str"],
-        "min_severity": "str"
-      }
-    },
+    "audiences": "dict",
     "severity_levels": ["str"]
   },
   "image": "ghcr.io/festion/smart_notification_router-{arch}"
