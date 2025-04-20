@@ -73,6 +73,11 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.6
+- Fixed schema validation error in config.json (properly defined the audience schema)
+- Created new icon files and fixed repository icon path
+- Added SVG vector version of the icon for better scaling
+
 ### v1.0.5
 - Fixed S6 overlay initialization error (s6-overlay-suexec: fatal: can only run as pid 1)
 - Updated Dockerfile to properly use the S6 init system
