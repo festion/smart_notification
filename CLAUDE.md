@@ -73,6 +73,14 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.14
+- Complete overhaul of Docker and S6 configuration
+- Switched to python-specific base image
+- Fixed S6 overlay issues by using simpler service script
+- Changed startup command to use direct Python execution
+- Added more S6 environment variables for stability
+- Simplified Dockerfile and build process
+
 ### v1.0.13
 - Removed image reference to fix installation error
 - Reverted to building locally while keeping S6 fixes
