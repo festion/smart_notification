@@ -73,6 +73,13 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.20
+- Added extensive debugging and logging
+- Created diagnostic scripts for troubleshooting
+- Added cont-init.d scripts for proper initialization
+- Implemented detailed logging throughout startup process
+- Added process tree analysis and S6 diagnostics
+
 ### v1.0.19
 - Completely restructured S6 overlay integration
 - Added proper S6 service structure for Home Assistant

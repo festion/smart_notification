@@ -1,17 +1,8 @@
-#!/bin/sh
+#!/usr/bin/with-contenv bash
 
-echo "[DEBUG] Starting smart-notification service (services.d)"
-echo "[DEBUG] Current directory: $(pwd)"
-echo "[DEBUG] User: $(whoami)"
-echo "[DEBUG] PID: $$"
-echo "[DEBUG] PPID: $PPID"
-echo "[DEBUG] Process tree:"
-ps -ef
-
-echo "[DEBUG] Generating configuration file..."
+echo "[CONFIG] Generating configuration file..."
 mkdir -p /config
 
-echo "[DEBUG] Running Python configuration script"
 python3 - << "EOL" > /config/notification_config.yaml
 import json
 import yaml
@@ -57,9 +48,11 @@ except Exception as e:
     sys.exit(1)
 EOL
 
-echo "[DEBUG] Configuration generated"
-echo "[DEBUG] Starting Smart Notification Router..."
-cd /app
-echo "[DEBUG] Now in directory: $(pwd)"
-echo "[DEBUG] Running main.py"
-exec python3 /app/main.py
+echo "[CONFIG] Configuration generated"
+echo "[CONFIG] Setting up environment"
+
+# Make scripts executable
+find /etc/services.d -type f -name "run" -exec chmod +x {} \;
+find /etc/s6-overlay -type f -name "run" -exec chmod +x {} \;
+
+echo "[CONFIG] Setup completed"

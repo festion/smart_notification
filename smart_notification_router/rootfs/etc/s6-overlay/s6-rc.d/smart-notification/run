@@ -1,5 +1,18 @@
-#!/command/execlineb -P
-s6-setuidgid root
+#!/bin/sh
+
+echo "[DEBUG] Starting smart-notification service"
+echo "[DEBUG] Current directory: $(pwd)"
+echo "[DEBUG] User: $(whoami)"
+echo "[DEBUG] PID: $$"
+echo "[DEBUG] PPID: $PPID"
+echo "[DEBUG] S6 version check:"
+/command/s6-version || echo "S6 command not found"
+
+echo "[DEBUG] Checking for application files:"
+ls -la /app || echo "App directory not found"
+
 cd /app
-with-contenv
+echo "[DEBUG] Now in directory: $(pwd)"
+
+echo "[DEBUG] Starting Python application"
 python3 main.py
