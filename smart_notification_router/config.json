@@ -29,5 +29,5 @@
     "deduplication_ttl": "int(60,3600)",
     "audiences": "match(.*)",
     "severity_levels": ["str"]
-  },
+  }
 }
