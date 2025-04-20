@@ -73,6 +73,13 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.25
+- Fixed broken icon display in the repository
+- Fixed icon references in repository.json and repository.yaml
+- Updated hacs.json with better configuration
+- Fixed URL references to point to the correct repository
+- Improved repository configuration files
+
 ### v1.0.24
 - Fixed "unable to exec bashio: No such file or directory" error
 - Replaced bashio with standard bash scripts to avoid dependency issues

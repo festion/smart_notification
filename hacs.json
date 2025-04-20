@@ -1,6 +1,12 @@
 {
-  "name": "Smart Notification",
+  "name": "Smart Notification Router",
   "domain": "smart_notification",
   "render_readme": true,
-  "homeassistant": "2022.8.0"
+  "homeassistant": "2022.8.0",
+  "filename": "smart_notification_router",
+  "hacs": "1.6.0",
+  "persistent_directory": "config",
+  "country": "ALL",
+  "zip_release": false,
+  "hide_default_branch": false
 }
