@@ -1,33 +1,16 @@
 {
   "name": "Smart Notification Router",
-  "version": "1.0.20",
+  "version": "0.1.0",
   "slug": "smart_notification_router",
-  "description": "Flexible notification routing with severity, audience, and deduplication",
+  "description": "Routes notifications based on severity, audience, and method",
+  "arch": ["amd64", "aarch64", "armv7"],
   "startup": "application",
   "boot": "auto",
-  "ingress": true,
-  "ingress_port": 8080,
-  "panel_icon": "mdi:message-alert",
-  "panel_title": "Notification Router",
-  "arch": ["amd64", "armv7", "aarch64"],
+  "init": true,
+  "hassio_api": true,
+  "homeassistant_api": true,
+  "privileged": [],
   "map": ["config:rw"],
-  "options": {
-    "deduplication_ttl": 300,
-    "audiences": {
-      "mobile": {
-        "services": ["notify.mobile_app_pixel_9_pro_xl"],
-        "min_severity": "high"
-      },
-      "dashboard": {
-        "services": ["persistent_notification.create"],
-        "min_severity": "low"
-      }
-    },
-    "severity_levels": ["low", "medium", "high", "emergency"]
-  },
-  "schema": {
-    "deduplication_ttl": "int(60,3600)",
-    "audiences": "match(.*)",
-    "severity_levels": ["str"]
-  }
+  "options": {},
+  "schema": {}
 }
