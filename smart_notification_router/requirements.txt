@@ -3,3 +3,5 @@ pyyaml
 flask
 requests
 jinja2
+python-dotenv
+setuptools

@@ -1,5 +1,12 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.4 (2025-04-22)
+- Fixed module import errors in Docker container
+- Added proper Python package structure
+- Improved error handling for module imports
+- Added fallback for missing tag routing module
+- Fixed compatibility with Home Assistant add-on environment
+
 ## v2.0.0-alpha.3 (2025-04-22)
 - Fixed integration of tag-based routing with main application
 - Connected tag manager UI to main Flask application

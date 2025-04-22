@@ -1,6 +1,6 @@
 {
   "name": "Smart Notification Router",
-  "version": "2.0.0-alpha.3",
+  "version": "2.0.0-alpha.4",
   "slug": "smart_notification_router",
   "description": "Smart notification routing with tag expressions, context awareness, and entity management",
   "url": "https://github.com/festion/smart_notification",

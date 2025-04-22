@@ -8,7 +8,21 @@ import logging
 import threading
 
 # Import tag-based routing system
-from tag_routing.integration import initialize_tag_routing, register_tag_routing_endpoints
+try:
+    from smart_notification_router.tag_routing.integration import initialize_tag_routing, register_tag_routing_endpoints
+except ImportError:
+    try:
+        from tag_routing.integration import initialize_tag_routing, register_tag_routing_endpoints
+    except ImportError:
+        logger = logging.getLogger('smart_notification')
+        logger.error("Cannot import tag_routing module. V2 features will be disabled.")
+        
+        # Create dummy functions for compatibility
+        def initialize_tag_routing(config):
+            return {}
+            
+        def register_tag_routing_endpoints(app):
+            pass
 
 # Configure logging
 logging.basicConfig(
@@ -472,6 +486,31 @@ def initialize_app():
         "severity_levels": config_data.get("severity_levels", ["low", "medium", "high", "emergency"]),
     }
     
+    # Check if tag_routing module is available
+    tag_routing_available = False
+    try:
+        # Check if the module exists
+        import os
+        if os.path.exists("/app/tag_routing"):
+            tag_routing_available = True
+            logger.info("Tag routing module found")
+        else:
+            logger.warning("Tag routing module not found in /app")
+            
+        if not tag_routing_available:
+            try:
+                from smart_notification_router import tag_routing
+                tag_routing_available = True
+                logger.info("Tag routing module found in package")
+            except ImportError:
+                logger.warning("Tag routing module not found in package")
+    except Exception as e:
+        logger.error(f"Error checking for tag routing module: {e}")
+    
+    if not tag_routing_available:
+        logger.warning("Tag-based routing will be disabled")
+        return
+    
     # Initialize tag-based routing
     logger.info("Initializing tag-based routing system")
     try:
@@ -479,6 +518,7 @@ def initialize_app():
         logger.info("Tag-based routing system initialized successfully")
     except Exception as e:
         logger.error(f"Error initializing tag-based routing: {e}")
+        return
     
     # Register tag-based routing endpoints
     try:

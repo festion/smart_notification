@@ -28,6 +28,21 @@ python3 -c "import flask, yaml" || {
     pip3 install --no-cache-dir flask pyyaml
 }
 
+# Check if package is installed, and install it if not
+echo "[INFO] Checking smart_notification_router package..."
+if ! python3 -c "import smart_notification_router" 2>/dev/null; then
+    echo "[INFO] Installing smart_notification_router package..."
+    cd /app && pip3 install -e .
+fi
+
+# Ensure tag_routing module is available
+echo "[INFO] Checking tag_routing module..."
+if [ -d "/app/tag_routing" ]; then
+    echo "[INFO] Found tag_routing module"
+else
+    echo "[WARNING] tag_routing module not found. V2 features will be disabled."
+fi
+
 # Generate configuration from the add-on options
 echo "[INFO] Generating configuration file from add-on options..."
 
