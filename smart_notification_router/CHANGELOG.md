@@ -1,5 +1,10 @@
 # Smart Notification Router Changelog
 
+## v1.0.40 (2025-04-22)
+- Updated add-on logo with Gemini logo
+- Replaced all icon files with new branding
+- Enhanced visual identity of the add-on
+
 ## v1.0.39 (2025-04-22)
 - Fixed icon URL for Home Assistant Supervisor API
 - Changed icon path to logo.png in the root directory
