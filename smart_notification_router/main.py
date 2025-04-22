@@ -201,6 +201,51 @@ def index():
         deduplication_ttl=DEDUPLICATION_TTL
     )
 
+@app.route("/tag-manager")
+def tag_manager():
+    """Tag manager page"""
+    logger.info("Tag manager page requested")
+    try:
+        return render_template("tag_manager.html")
+    except Exception as e:
+        logger.error(f"Error rendering tag manager template: {e}")
+        return f"Error: {e}", 500
+
+@app.route("/debug")
+def debug_info():
+    """Display debug information"""
+    import sys
+    import flask
+    
+    # Gather debug information
+    debug_data = {
+        "Python Version": sys.version,
+        "Flask Version": flask.__version__,
+        "App Name": app.name,
+        "App Import Name": app.import_name,
+        "URL Map": str(app.url_map),
+        "Blueprints": list(app.blueprints.keys()),
+        "Static Folder": app.static_folder,
+        "Template Folder": app.template_folder,
+        "Available Templates": os.listdir(app.template_folder) if os.path.exists(app.template_folder) else [],
+        "Environment": dict(os.environ),
+        "Sys Path": sys.path,
+        "Current Directory": os.getcwd(),
+        "Config": load_config(),
+    }
+    
+    # Check for tag_routing module
+    try:
+        import tag_routing
+        debug_data["Tag Routing Available"] = True
+        debug_data["Tag Routing Version"] = getattr(tag_routing, "__version__", "Unknown")
+        debug_data["Tag Routing Path"] = tag_routing.__file__
+    except ImportError as e:
+        debug_data["Tag Routing Available"] = False
+        debug_data["Tag Routing Error"] = str(e)
+    
+    return jsonify(debug_data)
+
 @app.route("/config", methods=["POST"])
 def update_config():
     """Update configuration via web UI"""

@@ -114,6 +114,14 @@ if [ ! -r "/app/main.py" ]; then
     chmod a+r /app/main.py || echo "[WARNING] Could not fix permissions"
 fi
 
+# Make sure template files are accessible
+echo "[INFO] Checking template locations..."
+if [ ! -d "/app/web/templates" ]; then
+    echo "[ERROR] Templates directory not found: /app/web/templates"
+else
+    echo "[INFO] Templates found: $(ls -la /app/web/templates)"
+fi
+
 # Start the application
 echo "[INFO] Starting Flask application..."
 cd /app

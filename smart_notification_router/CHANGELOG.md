@@ -1,5 +1,12 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.6 (2025-04-22)
+- Added direct tag manager route in main application
+- Added navigation link to tag manager in sidebar
+- Added debug endpoint for diagnosing issues
+- Fixed routing to tag manager template
+- Improved error handling for template rendering
+
 ## v2.0.0-alpha.5 (2025-04-22)
 - Fixed Docker build error with package installation
 - Simplified module import mechanism
