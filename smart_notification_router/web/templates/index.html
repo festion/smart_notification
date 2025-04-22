@@ -845,6 +845,24 @@
             
             navLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
+                    // Get the clicked navigation item name
+                    const navName = this.textContent.trim();
+                    console.log('Navigation clicked: ' + navName);
+                    
+                    // Allow Tag Manager to function normally (v2 feature)
+                    if (navName === "Tag Manager (v2)") {
+                        console.log("Allowing Tag Manager navigation");
+                        // Don't prevent default - let the link work normally
+                        return true;
+                    }
+                    
+                    // For Dashboard, use normal behavior
+                    if (navName === "Dashboard") {
+                        // Let it go to the home page
+                        return true;
+                    }
+                    
+                    // For other links, prevent default and show message
                     e.preventDefault();
                     
                     // Remove active class from all links
@@ -856,17 +874,11 @@
                     // Update header title
                     const headerTitle = document.querySelector('.header-title');
                     if (headerTitle) {
-                        headerTitle.textContent = this.textContent.trim() + ' Dashboard';
+                        headerTitle.textContent = navName + ' Dashboard';
                     }
-                    
-                    // Get the clicked navigation item name
-                    const navName = this.textContent.trim();
-                    console.log('Navigation clicked: ' + navName);
                     
                     // For now just show an alert about the feature
-                    if (navName !== 'Dashboard') {
-                        alert(navName + ' feature will be implemented in a future version');
-                    }
+                    alert(navName + ' feature will be implemented in a future version');
                 });
             });
             

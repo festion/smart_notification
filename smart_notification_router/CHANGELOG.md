@@ -1,5 +1,12 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.7 (2025-04-22)
+- Fixed navigation to tag manager page
+- Modified sidebar link behavior to allow v2 features
+- Improved cursor styling for navigation links
+- Fixed JavaScript that was preventing navigation
+- Added explicit dashboard and tag manager navigation paths
+
 ## v2.0.0-alpha.6 (2025-04-22)
 - Added direct tag manager route in main application
 - Added navigation link to tag manager in sidebar
