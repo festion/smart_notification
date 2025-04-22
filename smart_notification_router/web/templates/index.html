@@ -818,6 +818,16 @@
         function initNavigation() {
             // Add event listeners to sidebar navigation
             const navLinks = document.querySelectorAll('.sidebar-nav a');
+            
+            // Define sections to show/hide
+            const sections = {
+                'Dashboard': '.dashboard-section:nth-child(1), .dashboard-section:nth-child(2)',
+                'Notification History': '.notification-history-card',
+                'Audiences': '#admin-section',
+                'Settings': '#admin-section',
+                'Help': '#admin-section'
+            };
+            
             navLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -834,8 +844,14 @@
                         headerTitle.textContent = this.textContent.trim() + ' Dashboard';
                     }
                     
-                    // Future: Show/hide relevant sections based on navigation
-                    console.log('Navigation clicked: ' + this.textContent.trim());
+                    // Get the clicked navigation item name
+                    const navName = this.textContent.trim();
+                    console.log('Navigation clicked: ' + navName);
+                    
+                    // For now just show an alert about the feature
+                    if (navName !== 'Dashboard') {
+                        alert(navName + ' feature will be implemented in a future version');
+                    }
                 });
             });
             

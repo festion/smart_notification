@@ -227,11 +227,13 @@ function initTestNotification() {
 
 function sendTestNotification(title, message, severity, audience) {
     const payload = {
-        title,
-        message,
-        severity,
-        audience
+        title: title.trim(),
+        message: message.trim(),
+        severity: severity,
+        audience: audience
     };
+    
+    console.log('Sending payload:', JSON.stringify(payload));
     
     fetch('/notify', {
         method: 'POST',

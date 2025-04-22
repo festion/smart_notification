@@ -1,5 +1,14 @@
 # Smart Notification Router Changelog
 
+## v1.0.36 (2025-04-22)
+- Fixed broken addon icon by copying icon files to addon directory
+- Fixed JSON parsing error in test notification functionality
+- Improved sidebar navigation with proper user feedback
+- Added page not implemented alerts for navigation items
+- Fixed JSON formatting in notification payload
+- Added icon reference in config.json for proper display
+- Enhanced error handling for test notification
+
 ## v1.0.35 (2025-04-22)
 - Fixed UI buttons and links not working properly
 - Added proper script.js file reference with correct script tag
