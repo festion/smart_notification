@@ -7,22 +7,31 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for
 import logging
 import threading
 
+# For module imports, prepare the path
+import sys
+import os
+
+# Add current directory to path so we can import tag_routing as a module
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 # Import tag-based routing system
 try:
-    from smart_notification_router.tag_routing.integration import initialize_tag_routing, register_tag_routing_endpoints
-except ImportError:
-    try:
-        from tag_routing.integration import initialize_tag_routing, register_tag_routing_endpoints
-    except ImportError:
-        logger = logging.getLogger('smart_notification')
-        logger.error("Cannot import tag_routing module. V2 features will be disabled.")
+    # Try relative import first
+    import tag_routing.integration
+    initialize_tag_routing = tag_routing.integration.initialize_tag_routing
+    register_tag_routing_endpoints = tag_routing.integration.register_tag_routing_endpoints
+    logger = logging.getLogger('smart_notification')
+    logger.info("Successfully imported tag_routing module (relative)")
+except ImportError as e:
+    logger = logging.getLogger('smart_notification')
+    logger.warning(f"Cannot import tag_routing module: {e}. V2 features will be disabled.")
+    
+    # Create dummy functions for compatibility
+    def initialize_tag_routing(config):
+        return {}
         
-        # Create dummy functions for compatibility
-        def initialize_tag_routing(config):
-            return {}
-            
-        def register_tag_routing_endpoints(app):
-            pass
+    def register_tag_routing_endpoints(app):
+        pass
 
 # Configure logging
 logging.basicConfig(
@@ -489,25 +498,12 @@ def initialize_app():
     # Check if tag_routing module is available
     tag_routing_available = False
     try:
-        # Check if the module exists
-        import os
-        if os.path.exists("/app/tag_routing"):
-            tag_routing_available = True
-            logger.info("Tag routing module found")
-        else:
-            logger.warning("Tag routing module not found in /app")
-            
-        if not tag_routing_available:
-            try:
-                from smart_notification_router import tag_routing
-                tag_routing_available = True
-                logger.info("Tag routing module found in package")
-            except ImportError:
-                logger.warning("Tag routing module not found in package")
-    except Exception as e:
-        logger.error(f"Error checking for tag routing module: {e}")
-    
-    if not tag_routing_available:
+        # Check if the module exists by importing it
+        import tag_routing
+        tag_routing_available = True
+        logger.info("Tag routing module found")
+    except ImportError as e:
+        logger.warning(f"Tag routing module not found: {e}")
         logger.warning("Tag-based routing will be disabled")
         return
     
@@ -516,16 +512,12 @@ def initialize_app():
     try:
         components = initialize_tag_routing(app_config)
         logger.info("Tag-based routing system initialized successfully")
-    except Exception as e:
-        logger.error(f"Error initializing tag-based routing: {e}")
-        return
-    
-    # Register tag-based routing endpoints
-    try:
+        
+        # Register tag-based routing endpoints
         register_tag_routing_endpoints(app)
         logger.info("Tag-based routing endpoints registered successfully")
     except Exception as e:
-        logger.error(f"Error registering tag-based routing endpoints: {e}")
+        logger.error(f"Error setting up tag-based routing: {e}")
 
 if __name__ == "__main__":
     # Load configuration at startup

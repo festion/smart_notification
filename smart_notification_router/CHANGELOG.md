@@ -1,5 +1,12 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.5 (2025-04-22)
+- Fixed Docker build error with package installation
+- Simplified module import mechanism
+- Improved module detection and fallback
+- Removed complex package structure to fix installation issues
+- Enhanced module availability checks
+
 ## v2.0.0-alpha.4 (2025-04-22)
 - Fixed module import errors in Docker container
 - Added proper Python package structure

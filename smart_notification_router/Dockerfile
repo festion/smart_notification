@@ -23,9 +23,9 @@ COPY requirements.txt /app/
 COPY web /app/web/
 COPY run.sh /app/
 COPY tag_routing /app/tag_routing/
-COPY __init__.py /app/
 
-# Create Python package structure
+# Create Python package structure 
+RUN mkdir -p /app/tag_routing
 RUN touch /app/tag_routing/__init__.py
 
 # Install Python dependencies
@@ -42,9 +42,6 @@ RUN apk add --no-cache \
 
 # Install any remaining requirements
 RUN pip3 install --no-cache-dir -r /app/requirements.txt || echo "Continuing with system packages"
-
-# Install the package in development mode
-RUN cd /app && pip3 install -e .
 
 # Fix line endings and make scripts executable
 RUN sed -i 's/\r$//' /app/run.sh && \
