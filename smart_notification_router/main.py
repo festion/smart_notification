@@ -217,18 +217,43 @@ def update_config():
 def notify():
     """API endpoint to receive notifications"""
     try:
+        # Log the raw request data for debugging
+        logger.debug(f"Request data: {request.data[:200]}")
+        logger.debug(f"Content-Type: {request.headers.get('Content-Type')}")
+        
         # Try to parse JSON with more detailed error handling
         try:
-            payload = request.get_json()
+            if request.headers.get('Content-Type') == 'application/json':
+                payload = request.get_json(force=True)  # Force JSON parsing
+                if not payload:
+                    logger.error(f"Empty JSON payload with application/json Content-Type")
+                    return jsonify({"status": "error", "message": "Empty JSON payload"}), 400
+            else:
+                # Try both ways - sometimes Content-Type is incorrect
+                try:
+                    payload = request.get_json(force=True)
+                except:
+                    # Last resort - try to parse the data directly
+                    import json
+                    try:
+                        payload = json.loads(request.data.decode('utf-8'))
+                    except json.JSONDecodeError as err:
+                        logger.error(f"JSON parsing error: {err}, Data: {request.data[:100]}...")
+                        return jsonify({"status": "error", "message": f"JSON parsing error: {err}"}), 400
+                    
             if not payload:
                 if request.data:
                     logger.error(f"Invalid JSON payload: {request.data[:100]}...")
                     return jsonify({"status": "error", "message": "Invalid JSON format"}), 400
                 else:
                     return jsonify({"status": "error", "message": "Empty JSON payload"}), 400
+                    
         except Exception as json_err:
             logger.error(f"JSON parsing error: {json_err}, Data: {request.data[:100]}...")
             return jsonify({"status": "error", "message": f"JSON parsing error: {json_err}"}), 400
+            
+        # Log the parsed payload
+        logger.debug(f"Parsed payload: {payload}")
             
         # Check required fields
         required_fields = ["title", "message", "severity"]

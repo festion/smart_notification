@@ -1,5 +1,10 @@
 # Smart Notification Router Changelog
 
+## v1.0.37 (2025-04-22)
+- Fixed icon display by placing icon.png in proper root locations
+- Updated icon paths in all configuration files
+- Standardized icon references in repository configuration
+
 ## v1.0.36 (2025-04-22)
 - Fixed broken addon icon by copying icon files to addon directory
 - Fixed JSON parsing error in test notification functionality
