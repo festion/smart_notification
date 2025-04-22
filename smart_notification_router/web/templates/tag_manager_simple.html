@@ -19,7 +19,9 @@
     </ul>
     
     <div>
-        <a href="/">Return to Dashboard</a>
+        <a href="{{ url_for('index', _external=True) }}">Return to Dashboard</a> | 
+        <a href="{{ url_for('tag_manager', _external=True) }}">Full Tag Manager</a> | 
+        <a href="{{ url_for('request_debug', _external=True) }}">Debug Request</a>
     </div>
 </body>
 </html>

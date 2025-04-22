@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tag Manager - Smart Notification Router</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script src="{{ url_for('static', filename='js/tag_manager.js') }}" defer></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', _external=True) }}">
+    <script src="{{ url_for('static', filename='js/tag_manager.js', _external=True) }}" defer></script>
     <style>
         /* Custom styles for tag manager */
         .tag-manager-container {
@@ -285,11 +285,11 @@
             </div>
             
             <ul class="sidebar-nav">
-                <li><a href="/" style="cursor:pointer"><i class="mdi mdi-view-dashboard"></i> Dashboard</a></li>
-                <li><a href="/tag-manager" class="active" style="cursor:pointer"><i class="mdi mdi-tag-multiple"></i> Tag Manager (v2)</a></li>
-                <li><a href="/history"><i class="mdi mdi-history"></i> Notification History</a></li>
-                <li><a href="/settings"><i class="mdi mdi-settings"></i> Settings</a></li>
-                <li><a href="/help"><i class="mdi mdi-help-circle"></i> Help</a></li>
+                <li><a href="{{ url_for('index', _external=True) }}" style="cursor:pointer"><i class="mdi mdi-view-dashboard"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('tag_manager', _external=True) }}" class="active" style="cursor:pointer"><i class="mdi mdi-tag-multiple"></i> Tag Manager (v2)</a></li>
+                <li><a href="{{ url_for('request_debug', _external=True) }}"><i class="mdi mdi-bug"></i> Debug Info</a></li>
+                <li><a href="{{ url_for('routes', _external=True) }}"><i class="mdi mdi-routes"></i> View Routes</a></li>
+                <li><a href="{{ url_for('simple_tag_manager', _external=True) }}"><i class="mdi mdi-tag-outline"></i> Simple Tag Manager</a></li>
             </ul>
             
             <div class="user-info" id="sidebar-user-info">

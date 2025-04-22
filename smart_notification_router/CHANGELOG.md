@@ -1,5 +1,13 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.10 (2025-04-22)
+- Fixed Home Assistant ingress integration for tag manager
+- Added reverse proxy middleware to handle URL rewriting
+- Added request debug endpoint for diagnosing ingress issues
+- Updated templates to use url_for with _external=True for proper URL generation
+- Improved JavaScript API URL handling for ingress compatibility
+- Enhanced navigation links between dashboard and tag manager
+
 ## v2.0.0-alpha.9 (2025-04-22)
 - Added routes diagnostic endpoint
 - Enhanced logging for template rendering

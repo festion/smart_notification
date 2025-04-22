@@ -80,6 +80,74 @@ CURRENT_USER = {
 app = Flask(__name__, 
     static_folder='/app/web/static',
     template_folder='/app/web/templates')
+    
+# Configure for reverse proxy/ingress
+app.config['APPLICATION_ROOT'] = '/'
+app.config['PREFERRED_URL_SCHEME'] = 'http'
+
+# Support Home Assistant ingress by properly handling the script_name and path_info
+class ReverseProxied(object):
+    """Wrap the application in this middleware to handle multiple layers of reverse proxies"""
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        # Handle various proxy headers that might be present
+        # These could come from Home Assistant ingress, NPM, or other proxies
+
+        # First, check for X-Forwarded-Host, which NPM might set
+        forwarded_host = environ.get('HTTP_X_FORWARDED_HOST', '')
+        if forwarded_host:
+            environ['HTTP_HOST'] = forwarded_host
+
+        # Check for X-Forwarded-For to get the original client IP
+        forwarded_for = environ.get('HTTP_X_FORWARDED_FOR', '')
+        if forwarded_for:
+            environ['REMOTE_ADDR'] = forwarded_for.split(',')[0].strip()
+            
+        # Check for X-Forwarded-Proto to handle https
+        scheme = environ.get('HTTP_X_FORWARDED_PROTO', '')
+        if scheme:
+            environ['wsgi.url_scheme'] = scheme
+            
+        # Look for X-Forwarded-Prefix or X-Script-Name which NPM might use
+        script_name = environ.get('HTTP_X_FORWARDED_PREFIX', '')
+        if not script_name:
+            script_name = environ.get('HTTP_X_SCRIPT_NAME', '')
+            
+        # Also check Home Assistant specific headers
+        if not script_name:
+            script_name = environ.get('HTTP_X_INGRESS_PATH', '')
+        
+        # Apply the script_name if found
+        if script_name:
+            # Store the original for debugging
+            environ['HTTP_ORIGINAL_SCRIPT_NAME'] = environ.get('SCRIPT_NAME', '')
+            environ['HTTP_ORIGINAL_PATH_INFO'] = environ.get('PATH_INFO', '')
+            
+            # Update the SCRIPT_NAME
+            environ['SCRIPT_NAME'] = script_name
+            
+            # Fix PATH_INFO if it starts with the script_name
+            path_info = environ.get('PATH_INFO', '')
+            if path_info.startswith(script_name):
+                environ['PATH_INFO'] = path_info[len(script_name):]
+        
+        # Log proxy headers for debugging in development
+        if os.environ.get('FLASK_ENV') == 'development':
+            proxy_headers = {k: v for k, v in environ.items() if k.startswith('HTTP_X_')}
+            if proxy_headers:
+                print("Proxy headers:", proxy_headers)
+                print("SCRIPT_NAME:", environ.get('SCRIPT_NAME', ''))
+                print("PATH_INFO:", environ.get('PATH_INFO', ''))
+            
+        return self.app(environ, start_response)
+
+# Apply the reverse proxy middleware
+app.wsgi_app = ReverseProxied(app.wsgi_app)
+
+# Set up proper URL defaults
+app.config['SERVER_NAME'] = None
 
 def load_options():
     """Load options from the add-on configuration"""
@@ -204,7 +272,27 @@ def index():
 @app.route("/tag-manager")
 def tag_manager():
     """Tag manager page"""
-    logger.info("Tag manager page requested")
+    # Gather debug information about the request for logging
+    request_info = {
+        "url": str(request.url),
+        "base_url": str(request.base_url),
+        "url_root": str(request.url_root),
+        "path": request.path,
+        "script_root": request.script_root,
+        "headers": {key: value for key, value in request.headers.items()},
+        "remote_addr": request.remote_addr,
+        "host": request.host,
+    }
+    
+    logger.info(f"Tag manager page requested with request info: {request_info}")
+    
+    # Log environment variables for debugging
+    proxy_headers = {k: v for k, v in request.environ.items() if k.startswith('HTTP_X_')}
+    if proxy_headers:
+        logger.info(f"Proxy headers detected: {proxy_headers}")
+        logger.info(f"SCRIPT_NAME: {request.environ.get('SCRIPT_NAME', '')}")
+        logger.info(f"PATH_INFO: {request.environ.get('PATH_INFO', '')}")
+    
     try:
         logger.info("Attempting to render tag_manager.html template")
         return render_template("tag_manager.html")
@@ -251,7 +339,7 @@ def list_routes():
         "templates": templates,
         "static_folder": app.static_folder,
         "blueprints": list(app.blueprints.keys()),
-        "version": "2.0.0-alpha.8"
+        "version": "2.0.0-alpha.10"
     })
 
 @app.route("/debug")
@@ -288,6 +376,26 @@ def debug_info():
         debug_data["Tag Routing Error"] = str(e)
     
     return jsonify(debug_data)
+
+@app.route("/request-debug")
+def request_debug():
+    """Display detailed information about the current request"""
+    request_data = {
+        "URL": str(request.url),
+        "Base URL": str(request.base_url),
+        "URL Root": str(request.url_root),
+        "Path": request.path,
+        "Full Path": request.full_path,
+        "Script Root": request.script_root,
+        "Headers": dict(request.headers),
+        "Method": request.method,
+        "Query String": request.query_string.decode('utf-8'),
+        "Environment": {k: str(v) for k, v in request.environ.items()},
+        "Remote Address": request.remote_addr,
+        "Host": request.host,
+    }
+    
+    return jsonify(request_data)
 
 @app.route("/config", methods=["POST"])
 def update_config():

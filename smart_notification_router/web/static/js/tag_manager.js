@@ -126,8 +126,58 @@ function loadEntities() {
         container.innerHTML = '';
     });
     
-    // Fetch entities from API
-    fetch('/api/v2/entities')
+    // Determine the base URL prefix considering multiple proxy layers
+    // Get the script src which should have been rendered with url_for
+    const scripts = document.querySelectorAll('script');
+    let scriptSrc = '';
+    
+    // Find our tag_manager.js script
+    for (const script of scripts) {
+        if (script.src && script.src.includes('tag_manager.js')) {
+            scriptSrc = script.src;
+            break;
+        }
+    }
+    
+    // Log the detected script path for debugging
+    console.log('Detected script path:', scriptSrc);
+    
+    // Extract base URL up to the last occurrence of /static/
+    let baseUrlPrefix = '';
+    if (scriptSrc) {
+        // Extract everything before /static/ in the URL
+        const staticIndex = scriptSrc.lastIndexOf('/static/');
+        if (staticIndex > 0) {
+            baseUrlPrefix = scriptSrc.substring(0, staticIndex);
+        }
+    }
+    
+    // Fallback: look at the current page URL
+    if (!baseUrlPrefix) {
+        // Extract from the current page URL path
+        const pathParts = window.location.pathname.split('/');
+        const tagManagerIndex = pathParts.indexOf('tag-manager');
+        
+        if (tagManagerIndex > 0) {
+            // Remove the last part (tag-manager) and join
+            baseUrlPrefix = pathParts.slice(0, tagManagerIndex).join('/');
+        } else {
+            // Use window location as is
+            baseUrlPrefix = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+        }
+    }
+    
+    // Ensure no trailing slash
+    baseUrlPrefix = baseUrlPrefix.replace(/\/$/, '');
+    
+    const apiBaseUrl = `${baseUrlPrefix}/api/v2`;
+    
+    // Log the determined base URL for debugging
+    console.log('Base URL prefix:', baseUrlPrefix);
+    console.log('API base URL:', apiBaseUrl);
+    
+    // Fetch entities from API with the corrected URL
+    fetch(`${apiBaseUrl}/entities`)
         .then(response => response.json())
         .then(data => {
             if (data.status === 'ok') {
@@ -522,8 +572,56 @@ function saveTags() {
     // Show loading overlay
     document.getElementById('loading-overlay').style.display = 'flex';
     
+    // Create a function to get base URL prefix (for consistency)
+    function getBaseUrlPrefix() {
+        // Get the script src which should have been rendered with url_for
+        const scripts = document.querySelectorAll('script');
+        let scriptSrc = '';
+        
+        // Find our tag_manager.js script
+        for (const script of scripts) {
+            if (script.src && script.src.includes('tag_manager.js')) {
+                scriptSrc = script.src;
+                break;
+            }
+        }
+        
+        // Extract base URL up to the last occurrence of /static/
+        let baseUrlPrefix = '';
+        if (scriptSrc) {
+            // Extract everything before /static/ in the URL
+            const staticIndex = scriptSrc.lastIndexOf('/static/');
+            if (staticIndex > 0) {
+                baseUrlPrefix = scriptSrc.substring(0, staticIndex);
+            }
+        }
+        
+        // Fallback: look at the current page URL
+        if (!baseUrlPrefix) {
+            // Extract from the current page URL path
+            const pathParts = window.location.pathname.split('/');
+            const tagManagerIndex = pathParts.indexOf('tag-manager');
+            
+            if (tagManagerIndex > 0) {
+                // Remove the last part (tag-manager) and join
+                baseUrlPrefix = pathParts.slice(0, tagManagerIndex).join('/');
+            } else {
+                // Use window location as is
+                baseUrlPrefix = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+            }
+        }
+        
+        // Ensure no trailing slash
+        return baseUrlPrefix.replace(/\/$/, '');
+    }
+    
+    const baseUrlPrefix = getBaseUrlPrefix();
+    const apiBaseUrl = `${baseUrlPrefix}/api/v2`;
+    
+    console.log('Save Tags - Using API URL:', apiBaseUrl);
+    
     // Send tags to API
-    fetch('/api/v2/entity-tags', {
+    fetch(`${apiBaseUrl}/entity-tags`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -558,8 +656,56 @@ function syncTags() {
     // Show loading overlay
     document.getElementById('loading-overlay').style.display = 'flex';
     
+    // Use the getBaseUrlPrefix function defined in saveTags
+    function getBaseUrlPrefix() {
+        // Get the script src which should have been rendered with url_for
+        const scripts = document.querySelectorAll('script');
+        let scriptSrc = '';
+        
+        // Find our tag_manager.js script
+        for (const script of scripts) {
+            if (script.src && script.src.includes('tag_manager.js')) {
+                scriptSrc = script.src;
+                break;
+            }
+        }
+        
+        // Extract base URL up to the last occurrence of /static/
+        let baseUrlPrefix = '';
+        if (scriptSrc) {
+            // Extract everything before /static/ in the URL
+            const staticIndex = scriptSrc.lastIndexOf('/static/');
+            if (staticIndex > 0) {
+                baseUrlPrefix = scriptSrc.substring(0, staticIndex);
+            }
+        }
+        
+        // Fallback: look at the current page URL
+        if (!baseUrlPrefix) {
+            // Extract from the current page URL path
+            const pathParts = window.location.pathname.split('/');
+            const tagManagerIndex = pathParts.indexOf('tag-manager');
+            
+            if (tagManagerIndex > 0) {
+                // Remove the last part (tag-manager) and join
+                baseUrlPrefix = pathParts.slice(0, tagManagerIndex).join('/');
+            } else {
+                // Use window location as is
+                baseUrlPrefix = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+            }
+        }
+        
+        // Ensure no trailing slash
+        return baseUrlPrefix.replace(/\/$/, '');
+    }
+    
+    const baseUrlPrefix = getBaseUrlPrefix();
+    const apiBaseUrl = `${baseUrlPrefix}/api/v2`;
+    
+    console.log('Sync Tags - Using API URL:', apiBaseUrl);
+    
     // Send sync request to API
-    fetch('/api/v2/sync-tags', {
+    fetch(`${apiBaseUrl}/sync-tags`, {
         method: 'POST'
     })
         .then(response => response.json())
