@@ -1,0 +1,154 @@
+######################################
+# Smart Notification v2 Examples
+# Tag-Based Routing
+######################################
+
+# Example 1: Simple temperature notification to a specific user
+automation:
+  - id: notify_temperature_alert
+    alias: "Notify Temperature Alert"
+    description: "Send temperature alert to John's devices when temperature is high"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.living_room_temperature
+        above: 28
+    action:
+      - service: rest_command.smart_notify_v2
+        data:
+          title: "Temperature Alert"
+          message: "Living room temperature is {{ states('sensor.living_room_temperature') }}°C"
+          severity: "high"
+          target: "user:john"
+
+# Example 2: Context-aware notification based on presence
+automation:
+  - id: notify_door_open
+    alias: "Notify Door Open"
+    description: "Send door alert to appropriate devices based on user presence"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.front_door
+        to: "on"
+    action:
+      - service: rest_command.smart_notify_v2
+        data:
+          title: "Door Alert"
+          message: "Front door has been opened"
+          severity: "normal"
+          target: "{% if is_state('person.john', 'home') %}user:john+area:home{% else %}user:john+device:mobile{% endif %}"
+
+# Example 3: Notification with different targets based on severity
+automation:
+  - id: notify_security_alert
+    alias: "Notify Security Alert"
+    description: "Send security alerts with different targets based on severity"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.motion_sensor
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: input_boolean.security_system_armed
+        state: "on"
+    action:
+      - service: rest_command.smart_notify_v2
+        data:
+          title: "Security Alert"
+          message: "Motion detected in {{ trigger.to_state.attributes.friendly_name }}"
+          severity: >
+            {% if now().hour >= 22 or now().hour <= 6 %}
+              critical
+            {% else %}
+              normal
+            {% endif %}
+          target: >
+            {% if now().hour >= 22 or now().hour <= 6 %}
+              user:john|user:jane
+            {% else %}
+              user:john+device:mobile
+            {% endif %}
+
+# Example 4: Notification to multiple specific device types
+automation:
+  - id: notify_weather_alert
+    alias: "Notify Weather Alert"
+    description: "Send weather alert to all display devices"
+    trigger:
+      - platform: state
+        entity_id: weather.home
+        attribute: forecast
+    condition:
+      - condition: template
+        value_template: "{{ 'rain' in trigger.to_state.attributes.forecast[0].condition }}"
+    action:
+      - service: rest_command.smart_notify_v2
+        data:
+          title: "Weather Alert"
+          message: "Rain expected in the next 24 hours"
+          severity: "low"
+          target: "device:display"
+
+# Example 5: Notification excluding specific areas
+automation:
+  - id: notify_laundry_done
+    alias: "Notify Laundry Done"
+    description: "Send laundry notification to home devices except bedroom"
+    trigger:
+      - platform: state
+        entity_id: sensor.washing_machine_status
+        to: "complete"
+    action:
+      - service: rest_command.smart_notify_v2
+        data:
+          title: "Laundry Complete"
+          message: "The washing machine has finished its cycle"
+          severity: "low"
+          target: "area:home-area:bedroom"
+
+# REST command definition for Smart Notification v2
+rest_command:
+  smart_notify_v2:
+    url: http://homeassistant.local:8080/api/v2/notify
+    method: POST
+    content_type: "application/json"
+    payload: >
+      {
+        "title": "{{ title }}",
+        "message": "{{ message }}",
+        "severity": "{{ severity }}",
+        "target": "{{ target }}"
+      }
+
+# Tag entities in your Home Assistant configuration
+
+# Example device tagging:
+customize:
+  # User's mobile phone
+  mobile_app.john_pixel:
+    tags:
+      - user:john
+      - device:mobile
+      - priority:high
+  
+  # Living room speaker
+  media_player.living_room_speaker:
+    tags:
+      - area:living_room
+      - device:speaker
+      - priority:normal
+  
+  # Kitchen display
+  binary_sensor.kitchen_tablet:
+    tags:
+      - area:kitchen
+      - device:display
+      - priority:low
+  
+  # User presence sensors
+  person.john:
+    tags:
+      - user:john
+  
+  person.jane:
+    tags:
+      - user:jane

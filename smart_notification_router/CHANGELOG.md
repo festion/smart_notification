@@ -1,5 +1,18 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.1 (2025-04-22)
+- Implemented core tag-based routing system components
+- Added Home Assistant API client for entity and tag integration
+- Created tag expression parser with AND, OR, NOT operators
+- Added tag resolution service with caching layer
+- Implemented context resolver for presence-aware routing
+- Created routing engine with dynamic service selection
+- Added service discovery for categorizing notification services
+- Implemented API endpoints for v2 notification system
+- Added backward compatibility with v1 audiences
+- Created comprehensive documentation for tag-based routing
+- Added examples for tag-based notifications in Home Assistant
+
 ## Development Roadmap (2025-05)
 - Planning tag-based routing enhancement
 - Added design document and implementation plan
