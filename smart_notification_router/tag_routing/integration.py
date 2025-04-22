@@ -93,8 +93,8 @@ def register_tag_routing_endpoints(app):
     # Register the blueprint
     app.register_blueprint(tag_routing_bp)
     
-    # Register web routes
-    app.add_url_rule('/tag-manager', 'tag_manager', tag_manager_view)
+    # Register web routes - commented out to avoid conflicts with main.py route
+    # app.add_url_rule('/tag-manager', 'tag_manager', tag_manager_view)
     
     logger.info("Tag-based routing endpoints registered")
     

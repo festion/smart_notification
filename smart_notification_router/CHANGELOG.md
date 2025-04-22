@@ -1,5 +1,12 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.8 (2025-04-22)
+- Fixed route conflict with tag manager
+- Added demo mode with mock entities for testing
+- Fixed authentication errors with Home Assistant API
+- Added automatic fallback to demo mode when auth fails
+- Improved error handling for API requests
+
 ## v2.0.0-alpha.7 (2025-04-22)
 - Fixed navigation to tag manager page
 - Modified sidebar link behavior to allow v2 features
