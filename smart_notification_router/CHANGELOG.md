@@ -1,5 +1,12 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.9 (2025-04-22)
+- Added routes diagnostic endpoint
+- Enhanced logging for template rendering
+- Fixed Flask route configuration
+- Added template directory validation
+- Added route listing for debugging
+
 ## v2.0.0-alpha.8 (2025-04-22)
 - Fixed route conflict with tag manager
 - Added demo mode with mock entities for testing

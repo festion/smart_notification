@@ -206,10 +206,53 @@ def tag_manager():
     """Tag manager page"""
     logger.info("Tag manager page requested")
     try:
+        logger.info("Attempting to render tag_manager.html template")
         return render_template("tag_manager.html")
     except Exception as e:
         logger.error(f"Error rendering tag manager template: {e}")
+        try:
+            # Try the simple template as fallback
+            logger.info("Attempting to render simple tag manager template as fallback")
+            return render_template("tag_manager_simple.html")
+        except Exception as e2:
+            logger.error(f"Error rendering simple tag manager template: {e2}")
+            return f"Error rendering tag manager: {e}", 500
+            
+@app.route("/simple-tag-manager")
+def simple_tag_manager():
+    """Simple tag manager page for testing"""
+    logger.info("Simple tag manager page requested")
+    try:
+        return render_template("tag_manager_simple.html")
+    except Exception as e:
+        logger.error(f"Error rendering simple tag manager template: {e}")
         return f"Error: {e}", 500
+
+@app.route("/routes")
+def list_routes():
+    """Show all available routes for debugging"""
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append({
+            "endpoint": rule.endpoint,
+            "methods": [m for m in rule.methods if m != "OPTIONS" and m != "HEAD"],
+            "path": str(rule)
+        })
+    
+    # Check if template directory exists
+    template_dir = app.template_folder
+    templates = []
+    if os.path.exists(template_dir):
+        templates = os.listdir(template_dir)
+    
+    return jsonify({
+        "routes": routes,
+        "template_folder": template_dir,
+        "templates": templates,
+        "static_folder": app.static_folder,
+        "blueprints": list(app.blueprints.keys()),
+        "version": "2.0.0-alpha.8"
+    })
 
 @app.route("/debug")
 def debug_info():
