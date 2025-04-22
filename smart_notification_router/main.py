@@ -7,6 +7,9 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for
 import logging
 import threading
 
+# Import tag-based routing system
+from tag_routing.integration import initialize_tag_routing, register_tag_routing_endpoints
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -453,6 +456,37 @@ def cleanup_thread():
             logger.error(f"Error in cleanup thread: {e}")
         time.sleep(60)
 
+def initialize_app():
+    """Initialize the application with all required components."""
+    # Load options and config
+    options = load_options()
+    config_data = load_config()
+    
+    # Create app configuration for tag-based routing
+    app_config = {
+        "homeassistant_url": options.get("homeassistant_url", "http://supervisor/core/api"),
+        "homeassistant_token": options.get("homeassistant_token", ""),
+        "config_dir": "/config",
+        "deduplication_ttl": options.get("deduplication_ttl", 300),
+        "audiences": config_data.get("audiences", {}),
+        "severity_levels": config_data.get("severity_levels", ["low", "medium", "high", "emergency"]),
+    }
+    
+    # Initialize tag-based routing
+    logger.info("Initializing tag-based routing system")
+    try:
+        components = initialize_tag_routing(app_config)
+        logger.info("Tag-based routing system initialized successfully")
+    except Exception as e:
+        logger.error(f"Error initializing tag-based routing: {e}")
+    
+    # Register tag-based routing endpoints
+    try:
+        register_tag_routing_endpoints(app)
+        logger.info("Tag-based routing endpoints registered successfully")
+    except Exception as e:
+        logger.error(f"Error registering tag-based routing endpoints: {e}")
+
 if __name__ == "__main__":
     # Load configuration at startup
     load_options()
@@ -460,6 +494,9 @@ if __name__ == "__main__":
     
     # Start cleanup thread
     threading.Thread(target=cleanup_thread, daemon=True).start()
+    
+    # Initialize app with all components
+    initialize_app()
     
     # Start the application
     logger.info("Starting Flask application on 0.0.0.0:8080")

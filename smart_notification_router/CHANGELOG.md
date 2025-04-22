@@ -1,5 +1,11 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.3 (2025-04-22)
+- Fixed integration of tag-based routing with main application
+- Connected tag manager UI to main Flask application
+- Added proper initialization of tag routing components
+- Improved Home Assistant API integration
+
 ## v2.0.0-alpha.2 (2025-04-22)
 - Added tag manager UI for entity tagging
 - Created web interface to manage entity tags without editing YAML
