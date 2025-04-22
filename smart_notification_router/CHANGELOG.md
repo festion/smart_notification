@@ -1,5 +1,11 @@
 # Smart Notification Router Changelog
 
+## Development Roadmap (2025-05)
+- Planning tag-based routing enhancement
+- Added design document and implementation plan
+- Scheduled development to begin May 2025
+- See `/docs/tag_based_routing_design.md` for details
+
 ## v1.0.40 (2025-04-22)
 - Updated add-on logo with Gemini logo
 - Replaced all icon files with new branding
