@@ -1,5 +1,10 @@
 # Smart Notification Router Changelog
 
+## v1.0.39 (2025-04-22)
+- Fixed icon URL for Home Assistant Supervisor API
+- Changed icon path to logo.png in the root directory
+- Fixed icon 404 error in the add-on store
+
 ## v1.0.38 (2025-04-22)
 - Fixed "Loading your audiences" placeholder with actual audience tags
 - Fixed test notification JSON parsing with FormData submission
