@@ -226,21 +226,24 @@ function initTestNotification() {
 }
 
 function sendTestNotification(title, message, severity, audience) {
-    const payload = {
-        title: title.trim(),
-        message: message.trim(),
-        severity: severity,
-        audience: audience
-    };
+    // Convert data to FormData for more reliable transport
+    const formData = new FormData();
+    formData.append('title', title.trim());
+    formData.append('message', message.trim());
+    formData.append('severity', severity);
     
-    console.log('Sending payload:', JSON.stringify(payload));
+    // Handle audience as a string to avoid JSON parsing issues
+    if (Array.isArray(audience)) {
+        audience.forEach(aud => formData.append('audience', aud));
+    } else {
+        formData.append('audience', audience);
+    }
+    
+    console.log('Sending test notification with FormData');
     
     fetch('/notify', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
+        body: formData
     })
     .then(response => response.json())
     .then(data => {

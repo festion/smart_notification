@@ -1,5 +1,15 @@
 # Smart Notification Router Changelog
 
+## v1.0.38 (2025-04-22)
+- Fixed "Loading your audiences" placeholder with actual audience tags
+- Fixed test notification JSON parsing with FormData submission
+- Enhanced notification API endpoint to handle multiple formats
+- Added complete form data handling for more reliable message sending
+- Added audience tag styling in the UI
+- Updated icon path to standard Home Assistant add-on location
+- Set default user information instead of "Loading..."
+- Fixed multiple request format handling (JSON, FormData)
+
 ## v1.0.37 (2025-04-22)
 - Fixed icon display by placing icon.png in proper root locations
 - Updated icon paths in all configuration files

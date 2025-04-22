@@ -217,43 +217,70 @@ def update_config():
 def notify():
     """API endpoint to receive notifications"""
     try:
-        # Log the raw request data for debugging
-        logger.debug(f"Request data: {request.data[:200]}")
+        # Log request information for debugging
         logger.debug(f"Content-Type: {request.headers.get('Content-Type')}")
+        logger.debug(f"Form data present: {bool(request.form)}")
+        logger.debug(f"JSON available: {request.is_json}")
         
-        # Try to parse JSON with more detailed error handling
-        try:
-            if request.headers.get('Content-Type') == 'application/json':
-                payload = request.get_json(force=True)  # Force JSON parsing
-                if not payload:
-                    logger.error(f"Empty JSON payload with application/json Content-Type")
-                    return jsonify({"status": "error", "message": "Empty JSON payload"}), 400
-            else:
-                # Try both ways - sometimes Content-Type is incorrect
-                try:
-                    payload = request.get_json(force=True)
-                except:
-                    # Last resort - try to parse the data directly
-                    import json
-                    try:
-                        payload = json.loads(request.data.decode('utf-8'))
-                    except json.JSONDecodeError as err:
-                        logger.error(f"JSON parsing error: {err}, Data: {request.data[:100]}...")
-                        return jsonify({"status": "error", "message": f"JSON parsing error: {err}"}), 400
-                    
-            if not payload:
-                if request.data:
-                    logger.error(f"Invalid JSON payload: {request.data[:100]}...")
-                    return jsonify({"status": "error", "message": "Invalid JSON format"}), 400
-                else:
-                    return jsonify({"status": "error", "message": "Empty JSON payload"}), 400
-                    
-        except Exception as json_err:
-            logger.error(f"JSON parsing error: {json_err}, Data: {request.data[:100]}...")
-            return jsonify({"status": "error", "message": f"JSON parsing error: {json_err}"}), 400
+        # Initialize payload as empty dict
+        payload = {}
+        
+        # Handle different request formats
+        content_type = request.headers.get('Content-Type', '')
+        
+        # Case 1: FormData submission (from web UI)
+        if request.form:
+            logger.debug("Processing form data submission")
+            # Get form data
+            title = request.form.get('title')
+            message = request.form.get('message')
+            severity = request.form.get('severity')
+            # Handle audience as list from form
+            audience = request.form.getlist('audience')
             
-        # Log the parsed payload
+            payload = {
+                'title': title,
+                'message': message,
+                'severity': severity,
+                'audience': audience
+            }
+        
+        # Case 2: JSON API request
+        elif 'application/json' in content_type or request.is_json:
+            logger.debug("Processing JSON submission")
+            try:
+                payload = request.get_json(force=True)
+            except Exception as json_err:
+                logger.error(f"JSON parsing error: {json_err}")
+                return jsonify({"status": "error", "message": f"JSON parsing error: {json_err}"}), 400
+        
+        # Case 3: Other formats - try to handle as best we can
+        else:
+            logger.debug("Attempting to process unknown format")
+            # Try to extract fields from any available source
+            if request.data:
+                # Try direct JSON parsing
+                try:
+                    import json
+                    payload = json.loads(request.data.decode('utf-8'))
+                except Exception as e:
+                    logger.error(f"Failed to parse request data: {e}")
+                    # Try to build payload from request.values
+                    payload = {
+                        'title': request.values.get('title'),
+                        'message': request.values.get('message'),
+                        'severity': request.values.get('severity'),
+                        'audience': request.values.getlist('audience')
+                    }
+            else:
+                return jsonify({"status": "error", "message": "No data provided in request"}), 400
+                
+        # Log and validate payload
         logger.debug(f"Parsed payload: {payload}")
+        
+        # Ensure we have required data
+        if not payload:
+            return jsonify({"status": "error", "message": "Failed to parse request data"}), 400
             
         # Check required fields
         required_fields = ["title", "message", "severity"]
