@@ -8,12 +8,13 @@ providing the necessary interfaces to use tag expressions in notifications.
 import logging
 import yaml
 import os
-from flask import request, jsonify, Blueprint
+from flask import request, jsonify, Blueprint, render_template
 from .ha_client import HomeAssistantAPIClient
 from .parser import TagExpressionParser
 from .resolution import TagResolutionService, ContextResolver
 from .routing import RoutingEngine
 from .service_discovery import ServiceDiscovery
+from .entity_manager import EntityTagManager
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ tag_resolver = None
 context_resolver = None
 routing_engine = None
 service_discovery = None
+entity_manager = None
 
 # Configuration constants
 HA_URL_OPTION = "homeassistant_url"
@@ -42,7 +44,7 @@ def initialize_tag_routing(app_config):
     Returns:
         dict: Initialized components
     """
-    global ha_client, tag_resolver, context_resolver, routing_engine, service_discovery
+    global ha_client, tag_resolver, context_resolver, routing_engine, service_discovery, entity_manager
     
     # Get Home Assistant API configuration
     ha_url = app_config.get(HA_URL_OPTION, DEFAULT_HA_URL)
@@ -67,6 +69,9 @@ def initialize_tag_routing(app_config):
     # Initialize routing engine
     routing_engine = RoutingEngine(tag_resolver, context_resolver, ha_client, app_config)
     
+    # Initialize entity tag manager
+    entity_manager = EntityTagManager(ha_client, config_dir=app_config.get("config_dir", "/config"))
+    
     logger.info("Tag-based routing system initialized")
     
     return {
@@ -74,7 +79,8 @@ def initialize_tag_routing(app_config):
         "tag_resolver": tag_resolver,
         "context_resolver": context_resolver,
         "routing_engine": routing_engine,
-        "service_discovery": service_discovery
+        "service_discovery": service_discovery,
+        "entity_manager": entity_manager
     }
 
 
@@ -87,7 +93,18 @@ def register_tag_routing_endpoints(app):
     # Register the blueprint
     app.register_blueprint(tag_routing_bp)
     
+    # Register web routes
+    app.add_url_rule('/tag-manager', 'tag_manager', tag_manager_view)
+    
     logger.info("Tag-based routing endpoints registered")
+    
+def tag_manager_view():
+    """Render the tag manager web interface.
+    
+    Returns:
+        Response: Flask response with rendered template
+    """
+    return render_template('tag_manager.html')
 
 
 @tag_routing_bp.route('/notify', methods=['POST'])
@@ -278,6 +295,98 @@ def get_notification_history():
         
     except Exception as e:
         logger.error(f"Error getting notification history: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@tag_routing_bp.route('/entities', methods=['GET'])
+def get_entities():
+    """API endpoint to get all entities from Home Assistant.
+    
+    Returns:
+        Response: Flask response
+    """
+    try:
+        # Get entities from entity manager
+        entities = entity_manager.get_entities()
+        entity_tags = entity_manager.get_entity_tags()
+        
+        return jsonify({
+            "status": "ok",
+            "entities": entities,
+            "entity_tags": entity_tags,
+            "count": len(entities)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting entities: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@tag_routing_bp.route('/entity-tags', methods=['POST'])
+def set_entity_tags():
+    """API endpoint to set tags for an entity.
+    
+    Returns:
+        Response: Flask response
+    """
+    try:
+        # Get entity ID and tags from request
+        payload = request.get_json()
+        
+        entity_id = payload.get("entity_id")
+        tags = payload.get("tags", [])
+        
+        if not entity_id:
+            return jsonify({
+                "status": "error", 
+                "message": "Missing entity_id parameter"
+            }), 400
+        
+        # Set entity tags
+        success = entity_manager.set_entity_tags(entity_id, tags)
+        
+        if success:
+            return jsonify({
+                "status": "ok",
+                "message": f"Tags set for entity {entity_id}",
+                "entity_id": entity_id,
+                "tags": tags
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": f"Failed to set tags for entity {entity_id}"
+            }), 500
+        
+    except Exception as e:
+        logger.error(f"Error setting entity tags: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@tag_routing_bp.route('/sync-tags', methods=['POST'])
+def sync_tags():
+    """API endpoint to sync entity tags to Home Assistant.
+    
+    Returns:
+        Response: Flask response
+    """
+    try:
+        # Sync tags to Home Assistant
+        success = entity_manager.sync_tags_to_ha()
+        
+        if success:
+            return jsonify({
+                "status": "ok",
+                "message": "Tags synced to Home Assistant"
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "Failed to sync tags to Home Assistant"
+            }), 500
+        
+    except Exception as e:
+        logger.error(f"Error syncing tags: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 

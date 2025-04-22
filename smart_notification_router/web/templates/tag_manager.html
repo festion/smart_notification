@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tag Manager - Smart Notification Router</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/tag_manager.js') }}" defer></script>
+    <style>
+        /* Custom styles for tag manager */
+        .tag-manager-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 992px) {
+            .tag-manager-container {
+                grid-template-columns: 300px 1fr;
+            }
+        }
+
+        .entity-list {
+            border-right: 1px solid #eee;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .entity-category {
+            margin-bottom: 15px;
+        }
+
+        .entity-category-title {
+            font-weight: 600;
+            padding: 8px 12px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .entity-item {
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .entity-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .entity-item.selected {
+            background-color: rgba(3, 169, 244, 0.1);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .entity-type-icon {
+            margin-right: 8px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+        }
+
+        .entity-details {
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: var(--ha-card-box-shadow);
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .tag-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 16px;
+            background-color: rgba(3, 169, 244, 0.1);
+            color: var(--primary-color);
+            font-size: 14px;
+            gap: 5px;
+        }
+
+        .tag-badge .remove-tag {
+            cursor: pointer;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .tag-badge .remove-tag:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+
+        .tag-input-container {
+            display: flex;
+            margin-top: 15px;
+            gap: 10px;
+        }
+
+        .tag-input-container input {
+            flex-grow: 1;
+        }
+
+        .tag-suggestion {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 16px;
+            background-color: rgba(3, 169, 244, 0.05);
+            color: var(--primary-color);
+            font-size: 13px;
+            gap: 5px;
+            border: 1px dashed var(--primary-color);
+            cursor: pointer;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        .tag-suggestion:hover {
+            background-color: rgba(3, 169, 244, 0.1);
+        }
+
+        .tag-preview {
+            background-color: #f9f9f9;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .tag-preview code {
+            white-space: pre;
+            font-family: monospace;
+            display: block;
+        }
+
+        .search-bar {
+            margin-bottom: 15px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
+        .filter-menu {
+            display: flex;
+            margin-bottom: 15px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-item {
+            padding: 6px 12px;
+            border-radius: 16px;
+            background-color: #f5f5f5;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .filter-item.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .entity-selector {
+            display: flex;
+            align-items: center;
+        }
+
+        .tag-category {
+            font-weight: 600;
+            margin-bottom: 8px;
+            margin-top: 15px;
+        }
+
+        .tag-templates {
+            margin-top: 20px;
+        }
+
+        /* Loading indicator */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid rgba(3, 169, 244, 0.2);
+            border-top-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+
+        .sync-status {
+            margin-top: 15px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .sync-success {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            display: block;
+        }
+
+        .sync-error {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            display: block;
+        }
+
+        .entity-count {
+            background-color: rgba(0, 0, 0, 0.1);
+            color: #666;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: normal;
+        }
+
+        .load-more {
+            text-align: center;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .load-more:hover {
+            background-color: #e0e0e0;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <i class="mdi mdi-bell-ring"></i>
+                <span>Smart Notifications</span>
+            </div>
+            
+            <ul class="sidebar-nav">
+                <li><a href="/"><i class="mdi mdi-view-dashboard"></i> Dashboard</a></li>
+                <li><a href="/history"><i class="mdi mdi-history"></i> Notification History</a></li>
+                <li><a href="/tag-manager" class="active"><i class="mdi mdi-tag-multiple"></i> Tag Manager</a></li>
+                <li><a href="/settings"><i class="mdi mdi-settings"></i> Settings</a></li>
+                <li><a href="/help"><i class="mdi mdi-help-circle"></i> Help</a></li>
+            </ul>
+            
+            <div class="user-info" id="sidebar-user-info">
+                <div class="user-avatar">
+                    <i class="mdi mdi-account"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="sidebar-user-name">Default User</div>
+                    <div class="user-role" id="sidebar-user-role">User</div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Header -->
+        <header class="header">
+            <h1 class="header-title">Tag Manager</h1>
+            
+            <div class="header-actions">
+                <button class="header-btn" id="refresh-entities" title="Refresh Entities"><i class="mdi mdi-refresh"></i></button>
+                <button class="header-btn" id="help-button" title="Help"><i class="mdi mdi-help-circle-outline"></i></button>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <section class="dashboard-section">
+                <div class="section-header">
+                    <h2 class="section-title">Entity Tag Manager</h2>
+                    <button class="btn btn-primary" id="sync-tags-button">
+                        <i class="mdi mdi-sync"></i> Sync with Home Assistant
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-content">
+                        <p>Manage entity tags for Smart Notification v2 tag-based routing. Add tags to entities in Home Assistant without editing YAML files.</p>
+                        
+                        <div class="filter-menu">
+                            <div class="filter-item active" data-filter="all">All Entities</div>
+                            <div class="filter-item" data-filter="person">Persons</div>
+                            <div class="filter-item" data-filter="device_tracker">Devices</div>
+                            <div class="filter-item" data-filter="media_player">Media Players</div>
+                            <div class="filter-item" data-filter="binary_sensor">Binary Sensors</div>
+                            <div class="filter-item" data-filter="light">Lights</div>
+                            <div class="filter-item" data-filter="switch">Switches</div>
+                            <div class="filter-item" data-filter="tagged">Tagged Entities</div>
+                        </div>
+                        
+                        <div class="search-bar">
+                            <input type="text" id="entity-search" placeholder="Search entities...">
+                        </div>
+                        
+                        <div class="sync-status" id="sync-status"></div>
+                        
+                        <div class="tag-manager-container">
+                            <!-- Entity List -->
+                            <div class="entity-list" id="entity-list">
+                                <div class="loading-overlay" id="loading-overlay">
+                                    <div class="spinner"></div>
+                                </div>
+                                
+                                <!-- Entities will be loaded here -->
+                                <div class="entity-category" data-category="person">
+                                    <div class="entity-category-title">
+                                        <span><i class="mdi mdi-account"></i> Persons</span>
+                                        <span class="entity-count">0</span>
+                                    </div>
+                                    <div class="entity-category-items"></div>
+                                </div>
+                                
+                                <div class="entity-category" data-category="device_tracker">
+                                    <div class="entity-category-title">
+                                        <span><i class="mdi mdi-cellphone"></i> Devices</span>
+                                        <span class="entity-count">0</span>
+                                    </div>
+                                    <div class="entity-category-items"></div>
+                                </div>
+                                
+                                <div class="entity-category" data-category="media_player">
+                                    <div class="entity-category-title">
+                                        <span><i class="mdi mdi-speaker"></i> Media Players</span>
+                                        <span class="entity-count">0</span>
+                                    </div>
+                                    <div class="entity-category-items"></div>
+                                </div>
+                                
+                                <div class="entity-category" data-category="other">
+                                    <div class="entity-category-title">
+                                        <span><i class="mdi mdi-shape"></i> Other Entities</span>
+                                        <span class="entity-count">0</span>
+                                    </div>
+                                    <div class="entity-category-items"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Entity Details -->
+                            <div class="entity-details" id="entity-details">
+                                <div class="no-entity-selected" id="no-entity-selected">
+                                    <p>Select an entity from the list to manage its tags.</p>
+                                </div>
+                                
+                                <div class="entity-edit" id="entity-edit" style="display: none;">
+                                    <h3 id="entity-title">Entity Name</h3>
+                                    <p id="entity-id">entity.id</p>
+                                    
+                                    <div class="entity-state">
+                                        <strong>State:</strong> <span id="entity-state">unknown</span>
+                                    </div>
+                                    
+                                    <div class="tag-management">
+                                        <h4>Entity Tags</h4>
+                                        <div class="tag-list" id="entity-tags">
+                                            <!-- Tags will be displayed here -->
+                                        </div>
+                                        
+                                        <div class="tag-input-container">
+                                            <input type="text" id="tag-input" placeholder="Add a tag (e.g., user:john)">
+                                            <button class="btn btn-primary" id="add-tag-button">
+                                                <i class="mdi mdi-plus"></i> Add
+                                            </button>
+                                        </div>
+                                        
+                                        <div class="tag-templates">
+                                            <div class="tag-category">Tag Templates</div>
+                                            <div class="tag-suggestions">
+                                                <div class="tag-suggestion" data-tag="user:">user:name</div>
+                                                <div class="tag-suggestion" data-tag="device:">device:type</div>
+                                                <div class="tag-suggestion" data-tag="area:">area:location</div>
+                                                <div class="tag-suggestion" data-tag="priority:">priority:level</div>
+                                                <div class="tag-suggestion" data-tag="time:">time:period</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="tag-preview">
+                                            <h4>YAML Preview</h4>
+                                            <code id="yaml-preview">homeassistant:
+  customize:
+    entity.id:
+      tags:
+        - tag1
+        - tag2</code>
+                                        </div>
+                                        
+                                        <div class="card-actions">
+                                            <button class="btn btn-success" id="save-tags-button">
+                                                <i class="mdi mdi-content-save"></i> Save Tags
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
