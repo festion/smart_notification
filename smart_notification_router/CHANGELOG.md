@@ -1,5 +1,12 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.2 (2025-04-22)
+- Added tag manager UI for entity tagging
+- Created web interface to manage entity tags without editing YAML
+- Added API endpoints for entity and tag management
+- Implemented Home Assistant configuration sync for tags
+- Added entity browsing, searching, and filtering capabilities
+
 ## v2.0.0-alpha.1 (2025-04-22)
 - Implemented core tag-based routing system components
 - Added Home Assistant API client for entity and tag integration
