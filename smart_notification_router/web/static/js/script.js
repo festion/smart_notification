@@ -48,31 +48,42 @@ function checkStatus() {
 function initAudiencesUI() {
     const container = document.getElementById('audiences-container');
     const addButton = document.getElementById('add-audience');
-    const severityLevelsInput = document.getElementById('severity-levels');
+    const severityLevelsInput = document.getElementById('severity-levels-input');
     
     // Add audience handler
-    addButton.addEventListener('click', function() {
-        addAudienceEntry();
-    });
+    if (addButton) {
+        addButton.addEventListener('click', function() {
+            addAudienceEntry();
+        });
+    }
     
     // Remove audience handler
-    container.addEventListener('click', function(e) {
-        if (e.target.closest('.remove-btn')) {
-            const button = e.target.closest('.remove-btn');
-            const entry = button.closest('.audience-entry');
-            entry.remove();
-        }
-    });
+    if (container) {
+        container.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-btn')) {
+                const button = e.target.closest('.remove-btn');
+                const entry = button.closest('.audience-entry');
+                entry.remove();
+            }
+        });
+    }
     
     // Update severity options when severity levels change
-    severityLevelsInput.addEventListener('change', function() {
-        updateSeverityDropdowns();
-    });
+    if (severityLevelsInput) {
+        severityLevelsInput.addEventListener('change', function() {
+            updateSeverityDropdowns();
+        });
+    }
 }
 
 function addAudienceEntry(name = '', severity = '', services = []) {
     const container = document.getElementById('audiences-container');
-    const severityLevels = document.getElementById('severity-levels').value
+    if (!container) return;
+    
+    const severityLevelsInput = document.getElementById('severity-levels-input');
+    if (!severityLevelsInput) return;
+    
+    const severityLevels = severityLevelsInput.value
         .split(',')
         .map(level => level.trim())
         .filter(level => level !== '');
@@ -137,7 +148,10 @@ function addAudienceEntry(name = '', severity = '', services = []) {
 }
 
 function updateSeverityDropdowns() {
-    const severityLevels = document.getElementById('severity-levels').value
+    const severityLevelsInput = document.getElementById('severity-levels-input');
+    if (!severityLevelsInput) return;
+    
+    const severityLevels = severityLevelsInput.value
         .split(',')
         .map(level => level.trim())
         .filter(level => level !== '');
@@ -181,11 +195,18 @@ function updateSeverityDropdowns() {
 
 function initTestNotification() {
     const sendButton = document.getElementById('send-test');
+    if (!sendButton) return;
     
     sendButton.addEventListener('click', function() {
-        const title = document.getElementById('test-title').value;
-        const message = document.getElementById('test-message').value;
-        const severity = document.getElementById('test-severity').value;
+        const titleEl = document.getElementById('test-title');
+        const messageEl = document.getElementById('test-message');
+        const severityEl = document.getElementById('test-severity');
+        
+        if (!titleEl || !messageEl || !severityEl) return;
+        
+        const title = titleEl.value;
+        const message = messageEl.value;
+        const severity = severityEl.value;
         
         const audienceChecks = document.querySelectorAll('input[name="test_audience"]:checked');
         const audience = Array.from(audienceChecks).map(check => check.value);

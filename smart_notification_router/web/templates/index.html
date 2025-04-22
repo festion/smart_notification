@@ -6,6 +6,7 @@
     <title>Smart Notification Router</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <style>
         /* Dashboard Layout Styles */
         :root {
@@ -160,6 +161,15 @@
 
         .header-btn:hover {
             background-color: rgba(0,0,0,0.05);
+        }
+        
+        .header-btn.refreshing i {
+            animation: spin 1s linear;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         /* Main Content */
@@ -500,8 +510,8 @@
             <h1 class="header-title">Notification Dashboard</h1>
             
             <div class="header-actions">
-                <button class="header-btn" title="Refresh"><i class="mdi mdi-refresh"></i></button>
-                <button class="header-btn" title="Help"><i class="mdi mdi-help-circle-outline"></i></button>
+                <button class="header-btn" id="refresh-dashboard" title="Refresh"><i class="mdi mdi-refresh"></i></button>
+                <button class="header-btn" id="help-button" title="Help"><i class="mdi mdi-help-circle-outline"></i></button>
             </div>
         </header>
         
@@ -603,7 +613,7 @@
                         </div>
                         
                         <div class="card-actions">
-                            <button class="btn btn-secondary">
+                            <button class="btn btn-secondary" id="view-all-notifications">
                                 <i class="mdi mdi-history"></i> View All
                             </button>
                         </div>
@@ -779,10 +789,79 @@
             initStatusChecking();
             initTestNotification();
             initAdminFunctions();
+            initNavigation();
+            initButtons();
             
             // Poll status every 30 seconds
             setInterval(checkStatus, 30000);
         });
+        
+        function initButtons() {
+            // Initialize View All Notifications button
+            const viewAllButton = document.getElementById('view-all-notifications');
+            if (viewAllButton) {
+                viewAllButton.addEventListener('click', function() {
+                    console.log('View all notifications clicked');
+                    
+                    // Find the History link in the sidebar and click it
+                    const historyLink = document.querySelector('.sidebar-nav a[href="#"]:nth-child(1)');
+                    if (historyLink) {
+                        historyLink.click();
+                    }
+                    
+                    // In the future, this would navigate to a notifications history page
+                    alert('Notification History feature coming soon!');
+                });
+            }
+        }
+        
+        function initNavigation() {
+            // Add event listeners to sidebar navigation
+            const navLinks = document.querySelectorAll('.sidebar-nav a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    
+                    // Add active class to clicked link
+                    this.classList.add('active');
+                    
+                    // Update header title
+                    const headerTitle = document.querySelector('.header-title');
+                    if (headerTitle) {
+                        headerTitle.textContent = this.textContent.trim() + ' Dashboard';
+                    }
+                    
+                    // Future: Show/hide relevant sections based on navigation
+                    console.log('Navigation clicked: ' + this.textContent.trim());
+                });
+            });
+            
+            // Add event listener for refresh button
+            const refreshButton = document.getElementById('refresh-dashboard');
+            if (refreshButton) {
+                refreshButton.addEventListener('click', function() {
+                    console.log('Refreshing dashboard...');
+                    checkStatus();
+                    // Add a visual indication of refresh
+                    this.classList.add('refreshing');
+                    setTimeout(() => {
+                        this.classList.remove('refreshing');
+                    }, 1000);
+                });
+            }
+            
+            // Add event listener for help button
+            const helpButton = document.getElementById('help-button');
+            if (helpButton) {
+                helpButton.addEventListener('click', function() {
+                    console.log('Help button clicked');
+                    alert('Smart Notification Router Help\n\nThis dashboard allows you to configure notification routing based on audience and severity.\n\nFor assistance, refer to the documentation or contact your administrator.');
+                });
+            }
+        }
         
         // User Context
         function initUserContext() {

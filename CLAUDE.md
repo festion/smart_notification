@@ -11,6 +11,9 @@ This document provides technical details for development and maintenance of the 
 - **requirements.txt**: Python dependencies
 - **config.json**: Add-on configuration for Home Assistant
 - **web/**: Web UI files
+  - **templates/index.html**: Main dashboard template
+  - **static/js/script.js**: JavaScript for UI interactivity
+  - **static/css/styles.css**: CSS styles for the UI
 
 ## Repository Structure
 
@@ -345,3 +348,6 @@ print(response.json())
 4. Direct integration with additional notification services
 5. Enhanced error handling and recovery
 6. Real-time notification preview in the web UI
+7. Complete implementation of navigation section switching
+8. Functional admin configuration UI with validation
+9. User preferences persistence via Home Assistant API
