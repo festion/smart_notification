@@ -1,6 +1,6 @@
 # Smart Notification Router Changelog
 
-## v1.0.34 (2025-04-22)
+## v1.0.35 (2025-04-22)
 - Fixed UI buttons and links not working properly
 - Added proper script.js file reference with correct script tag
 - Fixed ID mismatch between HTML and JavaScript for severity levels
