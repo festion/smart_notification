@@ -229,10 +229,20 @@ https://github.com/festion/smart_notification`);
 function handleNavigation(section) {
     console.log('Navigating to section:', section);
     
-    // Get content sections
-    const personalSection = document.querySelector('.dashboard-section:nth-child(1)');
-    const toolsSection = document.querySelector('.dashboard-section:nth-child(2)');
+    // Get content sections and log for debugging
+    console.log('Navigating to section:', section);
+    
+    // Query sections by class rather than nth-child for better reliability
+    const personalSection = document.querySelector('.personal-section');
+    const toolsSection = document.querySelector('.tools-section');
     const adminSection = document.getElementById('admin-section');
+    
+    // Log what sections we found
+    console.log('Found sections:', { 
+        personalSection: !!personalSection, 
+        toolsSection: !!toolsSection, 
+        adminSection: !!adminSection 
+    });
     
     // Handle different navigation targets
     switch(section) {

@@ -76,6 +76,12 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v2.0.0-alpha.22
+- Fixed icon display in Home Assistant add-on store by removing explicit icon reference
+- Improved script.js navigation debugging with better section selection
+- Added more detailed console logging for UI navigation issues
+- Enhanced script.js error handling for section loading
+
 ### v2.0.0-alpha.21
 - Fixed "manifest unknown" Docker image pull error
 - Removed image parameter from config.json to allow local building
