@@ -75,3 +75,8 @@ RUN echo "Flask app is in $(pwd)" && \
     ls -la /app/web/static && \
     ls -la /app/web/templates && \
     python3 -m flask --version
+    
+# Copy icon files to multiple locations for maximum compatibility
+COPY icon.png /icon.png
+COPY icon.png /logo.png
+RUN ls -la /*.png

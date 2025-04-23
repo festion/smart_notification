@@ -76,6 +76,13 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v2.0.0-alpha.23
+- Fixed icon image file consistency between repository root and add-on directory
+- Optimized icon file size from 1.1MB to 3.8KB for faster loading
+- Updated Dockerfile to copy icon files to root locations for better visibility
+- Added additional docker build debugging for image issues
+- Forced container rebuild to pick up latest UI changes
+
 ### v2.0.0-alpha.22
 - Fixed icon display in Home Assistant add-on store by removing explicit icon reference
 - Improved script.js navigation debugging with better section selection
