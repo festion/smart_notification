@@ -76,6 +76,15 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v2.0.0-alpha.25
+- Resolved grey UI rendering issue with emergency CSS fixes
+- Added backup emergency UI at /emergency endpoint for testing
+- Added keyboard shortcut (Ctrl+Shift+O) to toggle debug outlines
+- Forced all dashboard sections to be visible by default
+- Improved UI visibility with !important CSS rules
+- Added version-specific CSS cache breaking
+- Added direct notification testing through emergency UI
+
 ### v2.0.0-alpha.24
 - Complete overhaul of web UI loading and error handling
 - Added robust error tracing and debugging for each component initialization

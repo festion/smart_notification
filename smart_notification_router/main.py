@@ -387,7 +387,7 @@ def list_routes():
         "templates": templates,
         "static_folder": app.static_folder,
         "blueprints": list(app.blueprints.keys()),
-        "version": "2.0.0-alpha.24"
+        "version": "2.0.0-alpha.25"
     })
 
 @app.route("/debug")
@@ -447,6 +447,101 @@ def request_debug():
     }
     
     return jsonify(request_data)
+    
+@app.route("/emergency")
+def emergency_ui():
+    """Emergency UI with minimal dependencies"""
+    emergency_html = """<!DOCTYPE html>
+    <html>
+    <head>
+        <title>Smart Notification Router - Emergency UI</title>
+        <style>
+            body { font-family: sans-serif; padding: 20px; }
+            .container { max-width: 800px; margin: 0 auto; }
+            .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+            h1 { color: #03a9f4; }
+            button { background: #03a9f4; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+            .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; }
+            .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Smart Notification Router v2.0.0-alpha.25</h1>
+            <div class="card">
+                <h2>Emergency Test Notification</h2>
+                <p>Send a basic test notification using this emergency interface:</p>
+                <form id="emergency-form">
+                    <div>
+                        <label>Title:</label>
+                        <input type="text" id="title" value="Emergency Test" style="width: 100%; margin-bottom: 10px; padding: 5px;">
+                    </div>
+                    <div>
+                        <label>Message:</label>
+                        <input type="text" id="message" value="This is an emergency test message" style="width: 100%; margin-bottom: 10px; padding: 5px;">
+                    </div>
+                    <div>
+                        <label>Target:</label>
+                        <input type="text" id="audience" value="mobile,dashboard" style="width: 100%; margin-bottom: 10px; padding: 5px;">
+                    </div>
+                    <button type="button" onclick="sendTest()">Send Test Notification</button>
+                </form>
+                <div id="result" style="margin-top: 15px;"></div>
+            </div>
+            
+            <div class="card">
+                <h2>Debug Links</h2>
+                <ul>
+                    <li><a href="/debug">View Debug Information</a></li>
+                    <li><a href="/request-debug">View Request Information</a></li>
+                    <li><a href="/routes">View Available Routes</a></li>
+                    <li><a href="/status">Check System Status</a></li>
+                    <li><a href="/">Return to Main Dashboard</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <script>
+            function sendTest() {
+                const title = document.getElementById('title').value;
+                const message = document.getElementById('message').value;
+                const audience = document.getElementById('audience').value.split(',');
+                
+                const formData = new FormData();
+                formData.append('title', title);
+                formData.append('message', message);
+                formData.append('severity', 'high');
+                
+                audience.forEach(item => {
+                    formData.append('audience', item.trim());
+                });
+                
+                fetch('/notify', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const resultDiv = document.getElementById('result');
+                    if (data.status === 'ok') {
+                        resultDiv.className = 'success';
+                        resultDiv.textContent = `Success! Notification sent to ${data.routed_count} services.`;
+                    } else {
+                        resultDiv.className = 'error';
+                        resultDiv.textContent = `Error: ${data.message}`;
+                    }
+                })
+                .catch(error => {
+                    const resultDiv = document.getElementById('result');
+                    resultDiv.className = 'error';
+                    resultDiv.textContent = `Error: ${error.message}`;
+                });
+            }
+        </script>
+    </body>
+    </html>
+    """
+    return emergency_html
 
 @app.route("/config", methods=["POST"])
 def update_config():

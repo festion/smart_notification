@@ -3,10 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Notification Router v2.0.0-alpha.24</title>
+    <title>Smart Notification Router v2.0.0-alpha.25</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script src="{{ url_for('static', filename='js/script.js') }}?v=24"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v=25">
+    <script src="{{ url_for('static', filename='js/script.js') }}?v=25"></script>
+    
+    <!-- Emergency CSS fix for grey screen issue -->
+    <style>
+        /* Direct fixes for visibility issues */
+        body {
+            background-color: #f5f5f5 !important;
+            color: #212121 !important;
+        }
+        
+        .dashboard-container {
+            display: grid !important;
+            grid-template-areas:
+                "sidebar header"
+                "sidebar main" !important;
+            grid-template-columns: 250px 1fr !important;
+            grid-template-rows: 60px 1fr !important;
+            min-height: 100vh !important;
+            background-color: #f5f5f5 !important;
+        }
+        
+        .sidebar {
+            background-color: #03a9f4 !important;
+            color: white !important;
+        }
+        
+        .main-content {
+            background-color: #f5f5f5 !important;
+            padding: 20px !important;
+        }
+        
+        .header {
+            background-color: white !important;
+            color: #212121 !important;
+        }
+        
+        .card {
+            background-color: white !important;
+            color: #212121 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            padding: 15px !important;
+            margin-bottom: 20px !important;
+        }
+        
+        /* Debug styling to show element boundaries */
+        .debug-outline * {
+            outline: 1px solid red !important;
+        }
+        
+        /* Force text to be visible */
+        h1, h2, h3, h4, p, span, a, div {
+            color: #212121 !important;
+        }
+        
+        /* Force sidebar text to be white */
+        .sidebar * {
+            color: white !important;
+        }
+    </style>
+    
     <!-- Inline debug script to ensure JavaScript is running -->
     <script>
         console.log('Smart Notification Router v2.0.0-alpha.24');

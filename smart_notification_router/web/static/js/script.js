@@ -9,10 +9,30 @@
 window.scriptLoaded = true;
 
 // Log script load immediately
-console.log('Script file loaded - v2.0.0-alpha.24');
+console.log('Script file loaded - v2.0.0-alpha.25');
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Smart Notification Dashboard loaded');
+    
+    // EMERGENCY FIX: Force UI visibility and styles
+    document.documentElement.classList.add('force-visibility');
+    
+    // Add debug outline toggle
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+Shift+O to toggle outlines for debugging
+        if (e.ctrlKey && e.shiftKey && e.key === 'O') {
+            document.body.classList.toggle('debug-outline');
+            console.log('Debug outlines toggled');
+        }
+    });
+    
+    // Force all sections to be visible initially
+    document.querySelectorAll('.dashboard-section').forEach(function(section) {
+        console.log('Found section:', section);
+        section.style.display = 'block';
+        section.style.opacity = '1';
+        section.style.visibility = 'visible';
+    });
     
     try {
         // Initialize all UI components with error handling
