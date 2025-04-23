@@ -1,6 +1,6 @@
 {
   "name": "Smart Notification Router",
-  "version": "2.0.0-alpha.27",
+  "version": "2.0.0-alpha.28",
   "slug": "smart_notification_router",
   "description": "Smart notification routing with tag expressions, context awareness, and entity management",
   "url": "https://github.com/festion/smart_notification",
@@ -26,5 +26,11 @@
     "deduplication_ttl": "int(60,3600)",
     "audience_config": "str",
     "severity_levels": ["str"]
+  },
+  "ports": {
+    "8080/tcp": 8080
+  },
+  "ports_description": {
+    "8080/tcp": "Web interface (Not required for Home Assistant ingress)"
   }
 }

@@ -122,7 +122,63 @@ else
     echo "[INFO] Templates found: $(ls -la /app/web/templates)"
 fi
 
+# Fix for audience_config option
+echo "[INFO] Processing audience_config if present..."
+python3 -c "
+import json
+import yaml
+import os
+
+try:
+    options_file = '/data/options.json'
+    
+    if os.path.exists(options_file):
+        with open(options_file, 'r') as f:
+            options = json.load(f)
+            
+        if 'audience_config' in options and isinstance(options['audience_config'], str):
+            try:
+                audiences = json.loads(options['audience_config'])
+                
+                # Create a new options file with 'audiences' instead of 'audience_config'
+                options['audiences'] = audiences
+                del options['audience_config']
+                
+                with open('/data/processed_options.json', 'w') as f:
+                    json.dump(options, f)
+                
+                print('[INFO] Successfully processed audience_config into audiences')
+            except Exception as e:
+                print(f'[WARNING] Error processing audience_config: {e}')
+except Exception as e:
+    print(f'[WARNING] Error checking for audience_config: {e}')
+"
+
 # Start the application
-echo "[INFO] Starting Flask application..."
+echo "[INFO] Starting Flask application listening on all interfaces..."
 cd /app
-exec python3 /app/main.py
+
+# Explicitly bind to all interfaces (0.0.0.0) to ensure ingress works
+echo "[INFO] Running: python3 /app/main.py with host 0.0.0.0"
+exec python3 -c "
+import main
+import flask
+
+# Monkey patch the Flask run method to ensure we bind to all interfaces
+def patched_run(self, host=None, port=None, **kwargs):
+    print(f'Starting Flask with host=0.0.0.0, port=8080')
+    from werkzeug.serving import run_simple
+    host = '0.0.0.0'
+    port = 8080
+    run_simple(host, port, self, **kwargs)
+
+# Apply the monkey patch
+flask.Flask.run = patched_run
+
+# Run the main module
+if __name__ == '__main__':
+    main.app.run(debug=True)
+else:
+    # Run directly since we're using exec
+    main.app.run(debug=True)
+"

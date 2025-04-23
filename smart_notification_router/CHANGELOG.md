@@ -1,5 +1,14 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.28 (2025-04-23)
+- Fixed ingress connection issues by explicitly binding Flask to 0.0.0.0
+- Added port mapping for direct access via port 8080
+- Improved Flask server startup with explicit host binding
+- Modified run.sh to use monkey patching for Flask server
+- Added converter for audience_config to standard audiences format
+- Enhanced error logging during startup
+- Improved startup reliability and port bindings
+
 ## v2.0.0-alpha.27 (2025-04-23)
 - Complete rewrite of UI rendering approach from templates to direct HTML
 - Replaced Flask template rendering with direct HTML string response

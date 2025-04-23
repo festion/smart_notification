@@ -726,7 +726,7 @@ def list_routes():
         "templates": templates,
         "static_folder": app.static_folder,
         "blueprints": list(app.blueprints.keys()),
-        "version": "2.0.0-alpha.27"
+        "version": "2.0.0-alpha.28"
     })
 
 @app.route("/debug")
