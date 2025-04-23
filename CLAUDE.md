@@ -76,6 +76,12 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v2.0.0-alpha.18
+- Fixed invalid schema format issue: 'dict' is not a recognized schema type
+- Changed audiences schema from 'dict' to 'str' for maximum compatibility
+- Fixed issue with add-on not appearing in the store
+- Updated to use only standard schema types recognized by Home Assistant
+
 ### v2.0.0-alpha.17
 - Fixed Supervisor timeout when reloading add-ons
 - Simplified schema structure to improve loading time

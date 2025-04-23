@@ -164,8 +164,9 @@ def load_options():
                 if "audiences" in options:
                     logger.debug(f"Found audiences in options: {type(options['audiences'])}")
                     
-                    # If the options file has audiences as a dictionary, use it to update config
+                    # Handle audiences based on type
                     if isinstance(options["audiences"], dict):
+                        # Dictionary case - direct usage
                         if "audiences" not in config or not isinstance(config["audiences"], dict):
                             config["audiences"] = {}
                             
@@ -174,6 +175,21 @@ def load_options():
                             if isinstance(audience_data, dict):
                                 config["audiences"][audience_name] = audience_data
                                 logger.debug(f"Added audience from options: {audience_name}")
+                    elif isinstance(options["audiences"], str):
+                        # String case - try to parse as JSON
+                        try:
+                            import json
+                            parsed_audiences = json.loads(options["audiences"])
+                            if isinstance(parsed_audiences, dict):
+                                if "audiences" not in config or not isinstance(config["audiences"], dict):
+                                    config["audiences"] = {}
+                                
+                                for audience_name, audience_data in parsed_audiences.items():
+                                    if isinstance(audience_data, dict):
+                                        config["audiences"][audience_name] = audience_data
+                                        logger.debug(f"Added audience from JSON string: {audience_name}")
+                        except Exception as e:
+                            logger.warning(f"Could not parse audiences string as JSON: {e}")
                 
                 # Handle severity levels if present
                 if "severity_levels" in options and isinstance(options["severity_levels"], list):
@@ -339,7 +355,7 @@ def list_routes():
         "templates": templates,
         "static_folder": app.static_folder,
         "blueprints": list(app.blueprints.keys()),
-        "version": "2.0.0-alpha.17"
+        "version": "2.0.0-alpha.18"
     })
 
 @app.route("/debug")
