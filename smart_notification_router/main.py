@@ -81,6 +81,10 @@ app = Flask(__name__,
     static_folder='/app/web/static',
     template_folder='/app/web/templates')
     
+# Print detailed debugging about app configuration
+print(f"Flask app created with static_folder={app.static_folder}, template_folder={app.template_folder}")
+print(f"Static URL path: {app.static_url_path}")
+    
 # Configure for reverse proxy/ingress
 app.config['APPLICATION_ROOT'] = '/'
 app.config['PREFERRED_URL_SCHEME'] = 'http'
@@ -383,7 +387,7 @@ def list_routes():
         "templates": templates,
         "static_folder": app.static_folder,
         "blueprints": list(app.blueprints.keys()),
-        "version": "2.0.0-alpha.23"
+        "version": "2.0.0-alpha.24"
     })
 
 @app.route("/debug")
@@ -391,6 +395,7 @@ def debug_info():
     """Display debug information"""
     import sys
     import flask
+    import glob
     
     # Gather debug information
     debug_data = {
@@ -402,7 +407,9 @@ def debug_info():
         "Blueprints": list(app.blueprints.keys()),
         "Static Folder": app.static_folder,
         "Template Folder": app.template_folder,
+        "Static URL Path": app.static_url_path,
         "Available Templates": os.listdir(app.template_folder) if os.path.exists(app.template_folder) else [],
+        "Available Static Files": glob.glob(f"{app.static_folder}/**/*", recursive=True) if os.path.exists(app.static_folder) else [],
         "Environment": dict(os.environ),
         "Sys Path": sys.path,
         "Current Directory": os.getcwd(),

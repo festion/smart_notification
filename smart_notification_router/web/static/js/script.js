@@ -5,22 +5,62 @@
  * including navigation, user preferences, test notifications, and configuration.
  */
 
+// Set a global flag to indicate the script loaded
+window.scriptLoaded = true;
+
+// Log script load immediately
+console.log('Script file loaded - v2.0.0-alpha.24');
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Smart Notification Dashboard loaded');
     
-    // Initialize all UI components
-    initUserContext();
-    initStatusChecking();
-    initTestNotification(); 
-    initAudiencesUI();
-    initNavigation();
-    initButtons();
-    initDebugMode();
-    
-    // Poll status every 30 seconds
-    setInterval(checkStatus, 30000);
-    
-    console.log('Dashboard initialization complete');
+    try {
+        // Initialize all UI components with error handling
+        console.log('Starting to initialize UI components');
+        
+        try { initUserContext(); console.log('✓ User context initialized'); } 
+        catch (e) { console.error('Failed to init user context:', e); }
+        
+        try { initStatusChecking(); console.log('✓ Status checking initialized'); } 
+        catch (e) { console.error('Failed to init status checking:', e); }
+        
+        try { initTestNotification(); console.log('✓ Test notification initialized'); } 
+        catch (e) { console.error('Failed to init test notification:', e); }
+        
+        try { initAudiencesUI(); console.log('✓ Audiences UI initialized'); } 
+        catch (e) { console.error('Failed to init audiences UI:', e); }
+        
+        try { initNavigation(); console.log('✓ Navigation initialized'); } 
+        catch (e) { console.error('Failed to init navigation:', e); }
+        
+        try { initButtons(); console.log('✓ Buttons initialized'); } 
+        catch (e) { console.error('Failed to init buttons:', e); }
+        
+        try { initDebugMode(); console.log('✓ Debug mode initialized'); } 
+        catch (e) { console.error('Failed to init debug mode:', e); }
+        
+        // Poll status every 30 seconds
+        setInterval(checkStatus, 30000);
+        
+        console.log('Dashboard initialization complete');
+        
+        // Add a visual indicator that JS is working
+        const indicator = document.createElement('div');
+        indicator.style.position = 'fixed';
+        indicator.style.bottom = '10px';
+        indicator.style.right = '10px';
+        indicator.style.backgroundColor = 'green';
+        indicator.style.color = 'white';
+        indicator.style.padding = '5px 10px';
+        indicator.style.borderRadius = '5px';
+        indicator.style.zIndex = '9999';
+        indicator.textContent = 'JS Active v24';
+        document.body.appendChild(indicator);
+        
+    } catch (error) {
+        console.error('Fatal error in main initialization:', error);
+        alert('There was an error initializing the dashboard. See console for details.');
+    }
 });
 
 /**

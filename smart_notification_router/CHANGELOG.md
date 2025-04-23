@@ -1,5 +1,15 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.24 (2025-04-23)
+- Complete overhaul of web UI loading and error handling
+- Added robust error tracing and debugging for each component initialization
+- Added fallback UI that activates if main JavaScript fails to load
+- Enhanced static file handling with explicit permissions
+- Added visual indicator to show when JavaScript is working correctly
+- Improved error reporting in browser console
+- Added detailed static file inspection in debug endpoints
+- Added version number to UI title and console logs
+
 ## v2.0.0-alpha.23 (2025-04-23)
 - Fixed icon image file consistency between repository root and add-on directory
 - Optimized icon file size from 1.1MB to 3.8KB for faster loading

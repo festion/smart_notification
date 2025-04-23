@@ -24,6 +24,17 @@ COPY web /app/web/
 COPY run.sh /app/
 COPY tag_routing /app/tag_routing/
 
+# Echo file tree for debugging
+RUN echo "Verifying web content:" && \
+    ls -la /app/web/ && \
+    ls -la /app/web/static/ && \
+    ls -la /app/web/static/js/ && \
+    ls -la /app/web/static/css/ && \
+    ls -la /app/web/templates/
+
+# Ensure file permissions are correct
+RUN chmod -R 755 /app/web/static
+
 # Create Python package structure 
 RUN mkdir -p /app/tag_routing
 RUN touch /app/tag_routing/__init__.py

@@ -3,10 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Notification Router</title>
+    <title>Smart Notification Router v2.0.0-alpha.24</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}?v=24"></script>
+    <!-- Inline debug script to ensure JavaScript is running -->
+    <script>
+        console.log('Smart Notification Router v2.0.0-alpha.24');
+        console.log('Document loaded with static path: {{ url_for("static", filename="js/script.js") }}');
+        
+        // Fallback script that will run if external script fails to load
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                // Check if our main init function has run
+                if (typeof window.scriptLoaded === 'undefined') {
+                    console.error('Main script did not load properly - activating fallback');
+                    document.body.insertAdjacentHTML('afterbegin', 
+                        '<div style="background-color:red; color:white; padding:10px; text-align:center;">' +
+                        'WARNING: JavaScript not loaded properly. Using emergency fallback. ' +
+                        '<a href="/debug" style="color:white; text-decoration:underline;">View Debug Info</a>' +
+                        '</div>'
+                    );
+                    
+                    // Basic fallback navigation
+                    document.querySelectorAll('.sidebar-nav a').forEach(function(link) {
+                        link.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            alert('Navigation handler active but main script not loaded. Please check browser console.');
+                            console.log('Click detected on', this.textContent.trim());
+                        });
+                    });
+                }
+            }, 2000); // Check after 2 seconds
+        });
     <style>
         /* Dashboard Layout Styles */
         :root {
