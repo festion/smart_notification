@@ -1,5 +1,12 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.20 (2025-04-23)
+- Fixed icon display issue in the Home Assistant add-on store
+- Added image parameter to config.json for proper store display
+- Ensured icon.png and logo.png are consistent across all locations
+- Added icon.png inside the add-on directory for proper reference
+- Standardized icon paths for maximum compatibility
+
 ## v2.0.0-alpha.19 (2025-04-23)
 - Fixed 'Unknown error, see supervisor' issue during add-on update
 - Completely restructured audience configuration to use string-based JSON
