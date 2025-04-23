@@ -1,6 +1,6 @@
 {
   "name": "Smart Notification Router",
-  "version": "2.0.0-alpha.18",
+  "version": "2.0.0-alpha.19",
   "slug": "smart_notification_router",
   "description": "Smart notification routing with tag expressions, context awareness, and entity management",
   "url": "https://github.com/festion/smart_notification",
@@ -19,21 +19,12 @@
   "map": ["config:rw"],
   "options": {
     "deduplication_ttl": 300,
-    "audiences": {
-      "mobile": {
-        "services": ["notify.mobile_app_pixel_9_pro_xl"],
-        "min_severity": "high"
-      },
-      "dashboard": {
-        "services": ["persistent_notification.create"],
-        "min_severity": "low"
-      }
-    },
+    "audience_config": "{\"mobile\":{\"services\":[\"notify.mobile_app_pixel_9_pro_xl\"],\"min_severity\":\"high\"},\"dashboard\":{\"services\":[\"persistent_notification.create\"],\"min_severity\":\"low\"}}",
     "severity_levels": ["low", "medium", "high", "emergency"]
   },
   "schema": {
     "deduplication_ttl": "int(60,3600)",
-    "audiences": "str",
+    "audience_config": "str",
     "severity_levels": ["str"]
   }
 }

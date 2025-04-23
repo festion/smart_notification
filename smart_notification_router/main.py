@@ -160,9 +160,37 @@ def load_options():
                 # Set deduplication TTL
                 DEDUPLICATION_TTL = options.get("deduplication_ttl", 300)
                 
-                # Handle audiences if present in options
-                if "audiences" in options:
-                    logger.debug(f"Found audiences in options: {type(options['audiences'])}")
+                # Handle audiences from the audience_config if present
+                if "audience_config" in options:
+                    logger.debug(f"Found audience_config in options: {type(options['audience_config'])}")
+                    
+                    # audience_config is always a string in the schema, so try to parse it
+                    try:
+                        import json
+                        
+                        # Parse the audience_config as JSON
+                        parsed_audiences = json.loads(options["audience_config"])
+                        
+                        if isinstance(parsed_audiences, dict):
+                            # Create/reset audiences in config
+                            if "audiences" not in config or not isinstance(config["audiences"], dict):
+                                config["audiences"] = {}
+                            
+                            # Update each audience from parsed JSON
+                            for audience_name, audience_data in parsed_audiences.items():
+                                if isinstance(audience_data, dict):
+                                    config["audiences"][audience_name] = audience_data
+                                    logger.debug(f"Added audience from audience_config: {audience_name}")
+                        
+                        logger.info(f"Successfully loaded {len(parsed_audiences)} audiences from audience_config")
+                        
+                    except Exception as e:
+                        logger.error(f"Failed to parse audience_config as JSON: {e}")
+                        logger.error(f"audience_config value: {options['audience_config']}")
+                
+                # Legacy support for direct audiences object
+                elif "audiences" in options:
+                    logger.debug(f"Found legacy audiences in options: {type(options['audiences'])}")
                     
                     # Handle audiences based on type
                     if isinstance(options["audiences"], dict):
@@ -174,7 +202,7 @@ def load_options():
                         for audience_name, audience_data in options["audiences"].items():
                             if isinstance(audience_data, dict):
                                 config["audiences"][audience_name] = audience_data
-                                logger.debug(f"Added audience from options: {audience_name}")
+                                logger.debug(f"Added audience from legacy options: {audience_name}")
                     elif isinstance(options["audiences"], str):
                         # String case - try to parse as JSON
                         try:
@@ -187,9 +215,9 @@ def load_options():
                                 for audience_name, audience_data in parsed_audiences.items():
                                     if isinstance(audience_data, dict):
                                         config["audiences"][audience_name] = audience_data
-                                        logger.debug(f"Added audience from JSON string: {audience_name}")
+                                        logger.debug(f"Added audience from legacy JSON string: {audience_name}")
                         except Exception as e:
-                            logger.warning(f"Could not parse audiences string as JSON: {e}")
+                            logger.warning(f"Could not parse legacy audiences string as JSON: {e}")
                 
                 # Handle severity levels if present
                 if "severity_levels" in options and isinstance(options["severity_levels"], list):
@@ -355,7 +383,7 @@ def list_routes():
         "templates": templates,
         "static_folder": app.static_folder,
         "blueprints": list(app.blueprints.keys()),
-        "version": "2.0.0-alpha.18"
+        "version": "2.0.0-alpha.19"
     })
 
 @app.route("/debug")

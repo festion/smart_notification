@@ -76,6 +76,13 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v2.0.0-alpha.19
+- Fixed 'Unknown error, see supervisor' issue during add-on update
+- Completely restructured audience configuration to use string-based JSON
+- Changed from 'audiences' to 'audience_config' in options schema for better validation
+- Added enhanced error handling and debugging for audience configuration
+- Maintained backward compatibility with previous configuration formats
+
 ### v2.0.0-alpha.18
 - Fixed invalid schema format issue: 'dict' is not a recognized schema type
 - Changed audiences schema from 'dict' to 'str' for maximum compatibility
