@@ -76,6 +76,17 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.35
+- Completely rebuilt GUI navigation system with section switching
+- Added fully functional button interactions across the dashboard
+- Implemented context-aware UI updates based on user role
+- Enhanced test notification feedback with real-time history updates
+- Added help dialogs and tooltips for improved user experience
+- Improved user preferences management with visual confirmation
+- Fixed inconsistent navigation between dashboard sections
+- Added animation effects and visual feedback for user interactions
+- Implemented modular JavaScript with comprehensive JSDoc documentation
+
 ### v1.0.34
 - Added tag-based routing system for dynamic notification targeting
 - Implemented tag expression parser with AND, OR, NOT logical operators

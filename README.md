@@ -12,7 +12,8 @@ A flexible notification routing service for Home Assistant that enables targeted
 - **Context-aware delivery**: Intelligently route notifications based on user presence and device states
 - **Deduplication**: Prevent notification spam by filtering duplicate messages
 - **Simple REST API**: Easy integration with any system that can make HTTP requests
-- **Web UI**: Configure notification rules through a user-friendly interface
+- **Interactive Web UI**: Intuitive dashboard for managing notifications with real-time feedback
+- **Tag Manager**: Visual interface for managing entity tags without editing YAML files
 - **Home Assistant Integration**: Native add-on for seamless Home Assistant integration
 
 ## Installation
