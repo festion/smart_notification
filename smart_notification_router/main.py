@@ -296,26 +296,365 @@ def get_hash(payload):
 @app.route("/")
 def index():
     """Web UI home page"""
-    # The load_config function now validates and fixes the configuration
-    # So we can use it directly without additional checks here
+    # Get the current config
     current_config = load_config()
+    audiences = current_config.get("audiences", {})
+    severity_levels = current_config.get("severity_levels", ["low", "medium", "high", "emergency"])
     
-    # Only log detailed debug information if requested
-    if os.environ.get('DEBUG_CONFIG', '').lower() in ('true', '1', 'yes', 'on'):
-        logger.info(f"Config structure: {type(current_config)}")
-        for key, value in current_config.items():
-            logger.info(f"Key: {key}, Type: {type(value)}")
-            if key == "audiences" and isinstance(value, dict):
-                for audience_name, audience_config in value.items():
-                    logger.info(f"  Audience: {audience_name}, Type: {type(audience_config)}")
+    # Log important information
+    logger.info(f"Rendering direct HTML with {len(audiences)} audiences and {len(severity_levels)} severity levels")
     
-    logger.debug(f"Rendering template with configured audiences: {list(current_config.get('audiences', {}).keys())}")
+    # Create direct HTML response - bypassing template system
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Notification Router v2.0.0-alpha.27</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css">
+    <style>
+        /* Reset and basic styles */
+        * {{
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }}
+        
+        body {{
+            font-family: Roboto, "Segoe UI", Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            background: #f5f5f5;
+            color: #212121;
+            margin: 0;
+            padding: 0;
+        }}
+        
+        /* Container layout */
+        .container {{
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }}
+        
+        /* Status dashboard */
+        .status-info {{
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }}
+        
+        h1 {{
+            color: #03a9f4;
+            margin-bottom: 20px;
+        }}
+        
+        h2 {{
+            color: #03a9f4;
+            margin-bottom: 15px;
+        }}
+        
+        /* Test notification form */
+        .test-notification {{
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }}
+        
+        .form-group {{
+            margin-bottom: 15px;
+        }}
+        
+        label {{
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }}
+        
+        input, select, textarea {{
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }}
+        
+        button {{
+            background-color: #03a9f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+        }}
+        
+        button:hover {{
+            background-color: #0288d1;
+        }}
+        
+        /* Audience checkboxes */
+        .checkbox-container {{
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }}
+        
+        .checkbox-container input {{
+            width: auto;
+            margin-right: 8px;
+        }}
+        
+        /* Status indicator */
+        .status-indicator {{
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }}
+        
+        .status-indicator i {{
+            margin-right: 8px;
+        }}
+        
+        .status-online {{
+            color: #4caf50;
+        }}
+        
+        .status-offline {{
+            color: #f44336;
+        }}
+        
+        /* Message styles */
+        .success-message {{
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #388e3c;
+            border: 1px solid #4caf50;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 15px;
+            display: none;
+        }}
+        
+        .error-message {{
+            background-color: rgba(244, 67, 54, 0.1);
+            color: #d32f2f;
+            border: 1px solid #f44336;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 15px;
+            display: none;
+        }}
+        
+        /* Links */
+        .debug-links {{
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }}
+        
+        .debug-links a {{
+            color: #03a9f4;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 15px;
+        }}
+        
+        .debug-links a:hover {{
+            text-decoration: underline;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="mdi mdi-bell-ring"></i> Smart Notification Router</h1>
+        
+        <div class="status-info">
+            <h2>System Status</h2>
+            
+            <div class="status-indicator">
+                <i class="mdi mdi-circle status-online" id="status-indicator"></i>
+                <span id="status-text">Checking status...</span>
+            </div>
+            
+            <div>
+                <strong>Deduplication Time:</strong> <span id="dedup-time">{DEDUPLICATION_TTL}</span> seconds
+            </div>
+            
+            <div>
+                <strong>Active Messages:</strong> <span id="active-messages">0</span>
+            </div>
+            
+            <div>
+                <strong>Version:</strong> 2.0.0-alpha.27
+            </div>
+        </div>
+        
+        <div class="test-notification">
+            <h2>Send Test Notification</h2>
+            
+            <form id="test-form">
+                <div class="form-group">
+                    <label for="test-title">Title</label>
+                    <input type="text" id="test-title" placeholder="Notification Title">
+                </div>
+                
+                <div class="form-group">
+                    <label for="test-message">Message</label>
+                    <textarea id="test-message" rows="3" placeholder="Notification Message"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="test-severity">Severity</label>
+                    <select id="test-severity">
+                        {"".join([f'<option value="{level}">{level.capitalize()}</option>' for level in severity_levels])}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Target Audiences</label>
+                    <div id="audience-checkboxes">
+                        {"".join([f'<div class="checkbox-container"><input type="checkbox" name="test_audience" value="{name}" id="audience-{name}"><label for="audience-{name}">{name}</label></div>' for name in audiences.keys()])}
+                    </div>
+                </div>
+                
+                <button type="button" id="send-test">Send Test Notification</button>
+            </form>
+            
+            <div id="test-result" class="success-message"></div>
+        </div>
+        
+        <div class="debug-links">
+            <h3>Debug Tools</h3>
+            <a href="/debug">Debug Info</a>
+            <a href="/emergency">Emergency UI</a>
+            <a href="/routes">Available Routes</a>
+            <a href="/status">System Status</a>
+            <a href="/services">Notification Services</a>
+        </div>
+    </div>
     
-    return render_template(
-        "index.html", 
-        config=current_config,
-        deduplication_ttl=DEDUPLICATION_TTL
-    )
+    <script>
+        // Check system status
+        function checkStatus() {{
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {{
+                    const statusIndicator = document.getElementById('status-indicator');
+                    const statusText = document.getElementById('status-text');
+                    const dedupTime = document.getElementById('dedup-time');
+                    const activeMessages = document.getElementById('active-messages');
+                    
+                    if (data.status === 'running') {{
+                        statusIndicator.className = 'mdi mdi-circle status-online';
+                        statusText.textContent = 'Online';
+                    }} else {{
+                        statusIndicator.className = 'mdi mdi-circle status-offline';
+                        statusText.textContent = 'Offline';
+                    }}
+                    
+                    dedupTime.textContent = data.deduplication_ttl;
+                    activeMessages.textContent = data.message_count;
+                }})
+                .catch(error => {{
+                    console.error('Status check failed:', error);
+                    const statusIndicator = document.getElementById('status-indicator');
+                    const statusText = document.getElementById('status-text');
+                    
+                    statusIndicator.className = 'mdi mdi-circle status-offline';
+                    statusText.textContent = 'Offline';
+                }});
+        }}
+        
+        // Send test notification
+        function sendTestNotification() {{
+            const title = document.getElementById('test-title').value;
+            const message = document.getElementById('test-message').value;
+            const severity = document.getElementById('test-severity').value;
+            
+            const audienceChecks = document.querySelectorAll('input[name="test_audience"]:checked');
+            const audience = Array.from(audienceChecks).map(check => check.value);
+            
+            if (!title || !message) {{
+                showResult('Please provide both title and message', false);
+                return;
+            }}
+            
+            if (audience.length === 0) {{
+                showResult('Please select at least one audience', false);
+                return;
+            }}
+            
+            // Create FormData for submission
+            const formData = new FormData();
+            formData.append('title', title.trim());
+            formData.append('message', message.trim());
+            formData.append('severity', severity);
+            
+            audience.forEach(item => {{
+                formData.append('audience', item);
+            }});
+            
+            // Send notification request
+            fetch('/notify', {{
+                method: 'POST',
+                body: formData
+            }})
+            .then(response => response.json())
+            .then(data => {{
+                if (data.status === 'ok') {{
+                    showResult(`Notification sent successfully to ${{data.routed_count || '?'}} services!`, true);
+                }} else if (data.status === 'duplicate') {{
+                    showResult('Duplicate notification: ' + data.message, false);
+                }} else {{
+                    showResult('Error: ' + (data.message || 'Unknown error'), false);
+                }}
+            }})
+            .catch(error => {{
+                console.error('Failed to send notification:', error);
+                showResult('Failed to send notification: ' + error.message, false);
+            }});
+        }}
+        
+        // Show result message
+        function showResult(message, success) {{
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.textContent = message;
+            resultDiv.className = success ? 'success-message' : 'error-message';
+            resultDiv.style.display = 'block';
+            
+            setTimeout(() => {{
+                resultDiv.style.display = 'none';
+            }}, 5000);
+        }}
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {{
+            // Check status on load
+            checkStatus();
+            
+            // Set up send button
+            const sendButton = document.getElementById('send-test');
+            if (sendButton) {{
+                sendButton.addEventListener('click', sendTestNotification);
+            }}
+            
+            // Poll status every 30 seconds
+            setInterval(checkStatus, 30000);
+            
+            console.log('Simple notification dashboard loaded successfully');
+        }});
+    </script>
+</body>
+</html>
+    """
+    
+    # Return direct HTML response
+    return html
 
 @app.route("/tag-manager")
 def tag_manager():
@@ -387,7 +726,7 @@ def list_routes():
         "templates": templates,
         "static_folder": app.static_folder,
         "blueprints": list(app.blueprints.keys()),
-        "version": "2.0.0-alpha.26"
+        "version": "2.0.0-alpha.27"
     })
 
 @app.route("/debug")

@@ -1,5 +1,14 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.27 (2025-04-23)
+- Complete rewrite of UI rendering approach from templates to direct HTML
+- Replaced Flask template rendering with direct HTML string response
+- Simplified UI to focus on core notification functionality
+- Eliminated all dependencies on external CSS files
+- Created pure self-contained UI with inline styles and JavaScript
+- Added comprehensive error checking and validation
+- Improved dynamic audience rendering with direct HTML generation
+
 ## v2.0.0-alpha.26 (2025-04-23)
 - Complete CSS rewrite with pure inline styles for maximum compatibility
 - Added floating debug panel with real-time logging
