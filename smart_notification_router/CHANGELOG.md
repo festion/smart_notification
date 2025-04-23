@@ -1,5 +1,10 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.21 (2025-04-23)
+- Fixed "manifest unknown" Docker image pull error
+- Removed image parameter from config.json to allow local building
+- Fixed add-on installation issues related to non-existent Docker image
+
 ## v2.0.0-alpha.20 (2025-04-23)
 - Fixed icon display issue in the Home Assistant add-on store
 - Added image parameter to config.json for proper store display

@@ -76,6 +76,11 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v2.0.0-alpha.21
+- Fixed "manifest unknown" Docker image pull error
+- Removed image parameter from config.json to allow local building
+- Fixed add-on installation issues related to non-existent Docker image
+
 ### v2.0.0-alpha.20
 - Fixed icon display issue in the Home Assistant add-on store
 - Added image parameter to config.json for proper store display
