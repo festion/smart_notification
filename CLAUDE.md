@@ -76,6 +76,12 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v2.0.0-alpha.17
+- Fixed Supervisor timeout when reloading add-ons
+- Simplified schema structure to improve loading time
+- Changed audiences schema from nested structure to simple dict type
+- Optimized configuration for better compatibility with Home Assistant
+
 ### v2.0.0-alpha.16
 - Fixed schema validation error in config.json
 - Improved schema compatibility with the Home Assistant add-on store
