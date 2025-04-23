@@ -8,6 +8,8 @@ A flexible notification routing service for Home Assistant that enables targeted
 
 - **Severity-based filtering**: Route notifications based on priority levels (low, medium, high, emergency)
 - **Audience targeting**: Send notifications only to relevant recipients
+- **Tag-based routing**: Dynamic notification targeting based on users, devices, and locations
+- **Context-aware delivery**: Intelligently route notifications based on user presence and device states
 - **Deduplication**: Prevent notification spam by filtering duplicate messages
 - **Simple REST API**: Easy integration with any system that can make HTTP requests
 - **Web UI**: Configure notification rules through a user-friendly interface

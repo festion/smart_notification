@@ -7,6 +7,7 @@ to fetch entity information, tags, and states for the tag-based routing system.
 
 import logging
 import requests
+import json
 import time
 from urllib.parse import urljoin
 from .parser import TagExpressionParser
@@ -34,6 +35,11 @@ class HomeAssistantAPIClient:
         self.cache_time = {}
         self.cache_ttl = 300  # 5 minutes cache TTL
         
+        # Check if we're in demo mode
+        self.demo_mode = access_token == "DEMO_TOKEN"
+        if self.demo_mode:
+            logger.warning("Running in DEMO mode - no actual API calls will be made")
+        
     def _make_request(self, endpoint, method="GET", params=None, json_data=None):
         """Make a request to the Home Assistant API.
         
@@ -49,7 +55,7 @@ class HomeAssistantAPIClient:
         url = urljoin(self.base_url, endpoint.lstrip("/"))
         
         # Check if we're in demo mode
-        if self.access_token == "DEMO_TOKEN":
+        if self.demo_mode:
             logger.info(f"DEMO MODE: Simulating request to {endpoint}")
             # Return mock data based on the endpoint
             if endpoint == "/states":
@@ -57,6 +63,8 @@ class HomeAssistantAPIClient:
             elif endpoint.startswith("/states/"):
                 entity_id = endpoint.split("/")[-1]
                 return self._mock_entity_state(entity_id)
+            elif endpoint.startswith("/services/"):
+                return {"result": "success", "demo": True}
             else:
                 # Default mock response
                 return {"mock_data": True, "endpoint": endpoint}
@@ -85,6 +93,7 @@ class HomeAssistantAPIClient:
             if "401" in str(e) or "Unauthorized" in str(e):
                 logger.warning("Authorization failed, falling back to demo mode")
                 self.access_token = "DEMO_TOKEN"
+                self.demo_mode = True
                 # Try again with demo mode
                 return self._make_request(endpoint, method, params, json_data)
             return None
@@ -114,11 +123,19 @@ class HomeAssistantAPIClient:
                 }
             },
             {
-                "entity_id": "device_tracker.john_phone",
-                "state": "home",
+                "entity_id": "notify.mobile_app_johns_phone",
+                "state": "unknown",
                 "attributes": {
                     "friendly_name": "John's Phone",
                     "tags": ["user:john", "device:mobile", "area:home"]
+                }
+            },
+            {
+                "entity_id": "notify.mobile_app_janes_phone",
+                "state": "unknown",
+                "attributes": {
+                    "friendly_name": "Jane's Phone",
+                    "tags": ["user:jane", "device:mobile"]
                 }
             },
             {
@@ -135,6 +152,22 @@ class HomeAssistantAPIClient:
                 "attributes": {
                     "friendly_name": "Kitchen Speaker",
                     "tags": ["device:speaker", "area:kitchen"]
+                }
+            },
+            {
+                "entity_id": "device_tracker.john_phone",
+                "state": "home",
+                "attributes": {
+                    "friendly_name": "John's Phone Location",
+                    "tags": ["user:john", "device:mobile", "area:home"]
+                }
+            },
+            {
+                "entity_id": "persistent_notification.create",
+                "state": "unknown",
+                "attributes": {
+                    "friendly_name": "Persistent Notification",
+                    "tags": ["device:dashboard"]
                 }
             }
         ]
@@ -290,9 +323,56 @@ class HomeAssistantAPIClient:
                 if parser.evaluate(expression, tags):
                     matching_entities.append(entity_id)
             except Exception as e:
-                logger.error(f"Error evaluating expression for {entity_id}: {e}")
+                logger.error(f"Error evaluating expression '{expression}' for {entity_id}: {e}")
         
         return matching_entities
+    
+    def get_available_services(self):
+        """Get all available services from Home Assistant.
+        
+        Returns:
+            dict: Dictionary of services by domain
+        """
+        # Check cache
+        cache_key = "available_services"
+        if cache_key in self.entity_cache and (time.time() - self.cache_time.get(cache_key, 0)) < self.cache_ttl:
+            return self.entity_cache[cache_key]
+        
+        # In demo mode, return mock services
+        if self.demo_mode:
+            services = {
+                "notify": ["mobile_app_johns_phone", "mobile_app_janes_phone", "persistent"],
+                "media_player": ["announce", "play_media", "turn_on"],
+                "persistent_notification": ["create", "dismiss"]
+            }
+            self.entity_cache[cache_key] = services
+            self.cache_time[cache_key] = time.time()
+            return services
+        
+        # Fetch services from the API
+        result = self._make_request("/services")
+        
+        if not result:
+            return {}
+        
+        # Parse response into a more usable format
+        services = {}
+        for domain_data in result:
+            domain = domain_data.get("domain")
+            if not domain:
+                continue
+                
+            domain_services = []
+            for service_name in domain_data.get("services", {}).keys():
+                domain_services.append(service_name)
+                
+            services[domain] = domain_services
+        
+        # Update cache
+        self.entity_cache[cache_key] = services
+        self.cache_time[cache_key] = time.time()
+        
+        return services
     
     def call_service(self, domain, service, service_data=None):
         """Call a Home Assistant service.
@@ -306,19 +386,62 @@ class HomeAssistantAPIClient:
             bool: True if successful, False otherwise
         """
         endpoint = f"/services/{domain}/{service}"
-        return self._make_request(endpoint, method="POST", json_data=service_data or {}) is not None
+        
+        # Log service call
+        logger.info(f"Calling service {domain}.{service} with data: {service_data}")
+        
+        result = self._make_request(endpoint, method="POST", json_data=service_data or {})
+        
+        # Return True if the request was successful
+        success = result is not None
+        
+        if success:
+            logger.info(f"Service call {domain}.{service} successful")
+        else:
+            logger.error(f"Service call {domain}.{service} failed")
+            
+        return success
     
-    def send_notification(self, service_name, notification_data):
-        """Send a notification using a notify service.
+    def send_notification(self, service_entity_id, notification_data):
+        """Send a notification using a specific service.
         
         Args:
-            service_name (str): Notification service name
+            service_entity_id (str): Service entity ID (e.g., "notify.mobile_app_johns_phone")
             notification_data (dict): Notification data
             
         Returns:
             bool: True if successful, False otherwise
         """
-        return self.call_service("notify", service_name, notification_data)
+        # Parse domain and service from entity ID
+        if "." not in service_entity_id:
+            logger.error(f"Invalid service entity ID format: {service_entity_id}")
+            return False
+            
+        domain, service = service_entity_id.split(".", 1)
+        
+        # Handle special cases for different domains
+        if domain == "persistent_notification":
+            # Format data for persistent notification
+            service_data = {
+                "title": notification_data.get("title", "Notification"),
+                "message": notification_data.get("message", ""),
+                "notification_id": notification_data.get("data", {}).get("tracking_id", f"smart_notification_{int(time.time())}")
+            }
+        elif domain == "media_player":
+            # Format data for media player
+            if service == "announce":
+                service_data = {
+                    "entity_id": service_entity_id,
+                    "message": notification_data.get("message", "")
+                }
+            else:
+                service_data = notification_data
+        else:
+            # Default for notify services
+            service_data = notification_data
+        
+        # Call the service
+        return self.call_service(domain, service, service_data)
     
     def get_person_entities(self):
         """Get all person entities and their states.
@@ -350,9 +473,17 @@ class HomeAssistantAPIClient:
         if not states:
             return []
         
-        # Filter for device entities (mobile_app and device_tracker)
+        # Filter for device entities (notifications and media players)
         return [
             entity for entity in states
-            if entity.get("entity_id", "").startswith(("device_tracker.", "sensor."))
-            and "mobile_app" in entity.get("entity_id", "")
+            if (entity.get("entity_id", "").startswith("notify.") and 
+                "mobile_app" in entity.get("entity_id", "")) or
+               entity.get("entity_id", "").startswith("media_player.")
         ]
+        
+    def invalidate_cache(self):
+        """Invalidate all cached data."""
+        self.entity_cache = {}
+        self.tag_cache = {}
+        self.cache_time = {}
+        logger.info("HA client cache invalidated")

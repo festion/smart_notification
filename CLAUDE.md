@@ -76,6 +76,17 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.34
+- Added tag-based routing system for dynamic notification targeting
+- Implemented tag expression parser with AND, OR, NOT logical operators
+- Enhanced Home Assistant API client with tag resolution capabilities
+- Added demo script showcasing tag-based notification routing
+- Created detailed implementation documentation for tag-based routing
+- Added support for context-aware notification delivery
+- Improved entity tag resolution and caching for better performance
+- Extended API with new endpoints for tag-based routing
+- Added support for different notification service types (mobile, speakers, etc.)
+
 ### v1.0.33
 - Fixed "Invalid audiences format" warning in logs
 - Improved options loading from Home Assistant configuration
