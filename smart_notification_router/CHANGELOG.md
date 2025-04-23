@@ -1,5 +1,52 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.15 (2025-04-23)
+- Fixed icon reference inconsistency between repository.json and config.json
+- Updated config.json to use icon.png instead of logo.png for add-on store compatibility
+- Ensured proper icon display in the Home Assistant add-on store
+- Updated version numbers across all files
+
+## v2.0.0-alpha.14 (2025-04-23)
+- Fixed navigation links on sidebar to work properly
+- Fixed JSON parsing issue with test notifications
+- Improved navigation system with javascript handlers
+- Added URL hash-based navigation for better linking
+- Enhanced form submission with FormData instead of JSON
+- Added error handling for various content types
+- Fixed layout issues with navigation sections
+- Unified navigation interface across all pages
+
+## v2.0.0-alpha.13 (2025-04-23)
+- Redesigned navigation sidebar with improved structure 
+- Added debug mode toggle with keyboard shortcut (Ctrl+Shift+D)
+- Improved visual feedback for active navigation items
+- Enhanced UI consistency across all pages
+- Updated logo and product name in header
+- Added highlighting effect for navigation targets
+- Cleaned up legacy navigation items from v1.0
+- Improved styling for dashboard elements
+
+## v2.0.0-alpha.12 (2025-04-23)
+- Completely rebuilt GUI navigation system with section switching
+- Added fully functional button interactions across the dashboard
+- Implemented context-aware UI updates based on user role
+- Enhanced test notification feedback with real-time history updates
+- Added help dialogs and tooltips for improved user experience
+- Improved user preferences management with visual confirmation
+- Fixed inconsistent navigation between dashboard sections
+- Added animation effects and visual feedback for user interactions
+
+## v2.0.0-alpha.11 (2025-04-23)
+- Added tag-based routing system for dynamic notification targeting
+- Implemented tag expression parser with AND, OR, NOT logical operators
+- Enhanced Home Assistant API client with tag resolution capabilities
+- Added demo script showcasing tag-based notification routing
+- Created detailed implementation documentation for tag-based routing
+- Added support for context-aware notification delivery
+- Improved entity tag resolution and caching for better performance
+- Extended API with new endpoints for tag-based routing
+- Added support for different notification service types (mobile, speakers, etc.)
+
 ## v2.0.0-alpha.10 (2025-04-22)
 - Fixed Home Assistant ingress integration for tag manager
 - Added reverse proxy middleware to handle URL rewriting

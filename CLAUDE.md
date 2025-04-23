@@ -76,7 +76,13 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
-### v1.0.37
+### v2.0.0-alpha.15
+- Fixed icon reference inconsistency between repository.json and config.json
+- Updated config.json to use icon.png instead of logo.png for add-on store compatibility
+- Ensured proper icon display in the Home Assistant add-on store
+- Updated version numbers across all files
+
+### v2.0.0-alpha.14
 - Fixed navigation links on sidebar to work properly
 - Fixed JSON parsing issue with test notifications
 - Improved navigation system with javascript handlers
