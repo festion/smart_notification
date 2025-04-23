@@ -76,6 +76,11 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v2.0.0-alpha.16
+- Fixed schema validation error in config.json
+- Improved schema compatibility with the Home Assistant add-on store
+- Fixed "expected string or buffer for dictionary value @ data['schema']['audiences']['str?']" error
+
 ### v2.0.0-alpha.15
 - Fixed icon reference inconsistency between repository.json and config.json
 - Updated config.json to use icon.png instead of logo.png for add-on store compatibility
