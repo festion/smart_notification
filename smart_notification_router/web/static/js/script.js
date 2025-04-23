@@ -9,26 +9,75 @@
 window.scriptLoaded = true;
 
 // Log script load immediately
-console.log('Script file loaded - v2.0.0-alpha.25');
+console.log('Script file loaded - v2.0.0-alpha.26');
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Smart Notification Dashboard loaded');
     
-    // EMERGENCY FIX: Force UI visibility and styles
-    document.documentElement.classList.add('force-visibility');
+    // Create a floating debug panel
+    const debugPanel = document.createElement('div');
+    debugPanel.style.position = 'fixed';
+    debugPanel.style.bottom = '10px';
+    debugPanel.style.right = '10px';
+    debugPanel.style.backgroundColor = '#333';
+    debugPanel.style.color = 'white';
+    debugPanel.style.padding = '10px';
+    debugPanel.style.borderRadius = '5px';
+    debugPanel.style.zIndex = '9999';
+    debugPanel.style.maxWidth = '300px';
+    debugPanel.style.maxHeight = '200px';
+    debugPanel.style.overflow = 'auto';
+    debugPanel.innerHTML = '<strong>Debug v26</strong><br>';
+    document.body.appendChild(debugPanel);
     
-    // Add debug outline toggle
+    // Helper function to log to debug panel
+    function debugLog(message) {
+        console.log(message);
+        const line = document.createElement('div');
+        line.textContent = message;
+        debugPanel.appendChild(line);
+        
+        // Keep only last 10 lines
+        const lines = debugPanel.querySelectorAll('div');
+        if (lines.length > 10) {
+            debugPanel.removeChild(lines[0]);
+        }
+    }
+    
+    // Log debug info
+    debugLog('UI Loaded: ' + new Date().toLocaleTimeString());
+    
+    // Add keyboard shortcuts
     document.addEventListener('keydown', function(e) {
         // Ctrl+Shift+O to toggle outlines for debugging
         if (e.ctrlKey && e.shiftKey && e.key === 'O') {
             document.body.classList.toggle('debug-outline');
-            console.log('Debug outlines toggled');
+            debugLog('Debug outlines toggled');
+        }
+        
+        // Ctrl+Shift+D to toggle debug panel
+        if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+            debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+            debugLog('Debug panel toggled');
         }
     });
     
+    // Add emergency UI links
+    const emergencyLink = document.createElement('a');
+    emergencyLink.href = './emergency';
+    emergencyLink.textContent = 'Emergency UI';
+    emergencyLink.style.display = 'block';
+    emergencyLink.style.color = 'white';
+    emergencyLink.style.marginTop = '10px';
+    debugPanel.appendChild(emergencyLink);
+    
+    // Log DOM elements count
+    const sections = document.querySelectorAll('.dashboard-section');
+    debugLog(`Found ${sections.length} sections`);
+    
     // Force all sections to be visible initially
-    document.querySelectorAll('.dashboard-section').forEach(function(section) {
-        console.log('Found section:', section);
+    sections.forEach(function(section, index) {
+        debugLog(`Section ${index}: ${section.classList}`);
         section.style.display = 'block';
         section.style.opacity = '1';
         section.style.visibility = 'visible';

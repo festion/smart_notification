@@ -1,5 +1,15 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.26 (2025-04-23)
+- Complete CSS rewrite with pure inline styles for maximum compatibility
+- Added floating debug panel with real-time logging
+- Made emergency UI compatible with Home Assistant ingress
+- Fixed path handling in emergency notification test UI
+- Added dynamic URLs for all debug endpoints
+- Enhanced visibility with stronger style enforcement
+- Improved emergency access via debug panel link
+- Added keyboard shortcut to toggle debug panel (Ctrl+Shift+D)
+
 ## v2.0.0-alpha.25 (2025-04-23)
 - Resolved grey UI rendering issue with emergency CSS fixes
 - Added backup emergency UI at /emergency endpoint for testing

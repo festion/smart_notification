@@ -387,7 +387,7 @@ def list_routes():
         "templates": templates,
         "static_folder": app.static_folder,
         "blueprints": list(app.blueprints.keys()),
-        "version": "2.0.0-alpha.25"
+        "version": "2.0.0-alpha.26"
     })
 
 @app.route("/debug")
@@ -449,8 +449,9 @@ def request_debug():
     return jsonify(request_data)
     
 @app.route("/emergency")
+@app.route("/emergency/")
 def emergency_ui():
-    """Emergency UI with minimal dependencies"""
+    """Emergency UI with minimal dependencies - available through ingress"""
     emergency_html = """<!DOCTYPE html>
     <html>
     <head>
@@ -491,13 +492,35 @@ def emergency_ui():
             
             <div class="card">
                 <h2>Debug Links</h2>
-                <ul>
-                    <li><a href="/debug">View Debug Information</a></li>
-                    <li><a href="/request-debug">View Request Information</a></li>
-                    <li><a href="/routes">View Available Routes</a></li>
-                    <li><a href="/status">Check System Status</a></li>
-                    <li><a href="/">Return to Main Dashboard</a></li>
+                <ul id="debug-links">
+                    <!-- Links will be populated by JavaScript -->
                 </ul>
+                
+                <script>
+                    // Get the base URL for proper linking with ingress
+                    const baseUrl = window.location.pathname.includes('/emergency') 
+                        ? window.location.pathname.split('/emergency')[0] 
+                        : '';
+                        
+                    // Create links with proper base URL
+                    const links = [
+                        { text: 'View Debug Information', path: '/debug' },
+                        { text: 'View Request Information', path: '/request-debug' },
+                        { text: 'View Available Routes', path: '/routes' },
+                        { text: 'Check System Status', path: '/status' },
+                        { text: 'Return to Main Dashboard', path: '/' }
+                    ];
+                    
+                    const linksList = document.getElementById('debug-links');
+                    links.forEach(link => {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.href = baseUrl + link.path;
+                        a.textContent = link.text;
+                        li.appendChild(a);
+                        linksList.appendChild(li);
+                    });
+                </script>
             </div>
         </div>
         
@@ -516,7 +539,12 @@ def emergency_ui():
                     formData.append('audience', item.trim());
                 });
                 
-                fetch('/notify', {
+                // Get the base URL
+                const baseUrl = window.location.pathname.includes('/emergency') 
+                    ? window.location.pathname.split('/emergency')[0] 
+                    : '';
+                
+                fetch(baseUrl + '/notify', {
                     method: 'POST',
                     body: formData
                 })
