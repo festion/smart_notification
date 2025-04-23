@@ -76,6 +76,16 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.37
+- Fixed navigation links on sidebar to work properly
+- Fixed JSON parsing issue with test notifications
+- Improved navigation system with javascript handlers
+- Added URL hash-based navigation for better linking
+- Enhanced form submission with FormData instead of JSON
+- Added error handling for various content types
+- Fixed layout issues with navigation sections
+- Unified navigation interface across all pages
+
 ### v1.0.36
 - Redesigned navigation sidebar with improved structure
 - Added debug mode toggle with keyboard shortcut (Ctrl+Shift+D)

@@ -69,50 +69,89 @@ function toggleDebugLinks(forceShow) {
  * Initialize navigation functionality
  */
 function initNavigation() {
-    // Add active class to current page link
-    const currentPath = window.location.pathname;
-    const navLinks = document.querySelectorAll('.sidebar-nav a');
+    // Get navigation elements
+    const dashboardLink = document.getElementById('nav-dashboard');
+    const historyLink = document.getElementById('nav-history');
+    const preferencesLink = document.getElementById('nav-preferences');
+    const audiencesLink = document.getElementById('nav-audiences');
+    const helpLink = document.getElementById('nav-help');
     
-    navLinks.forEach(link => {
-        // If we're on the dashboard page, only the dashboard link should be active
-        if (currentPath === '/' || currentPath === '') {
-            if (link.getAttribute('href') === '/' || link.getAttribute('href') === '') {
-                link.classList.add('active');
-            } else {
-                link.classList.remove('active');
-            }
-        } 
-        // Otherwise, activate link if its href matches the current path
-        else if (link.getAttribute('href') === currentPath) {
-            link.classList.add('active');
-        } else {
-            link.classList.remove('active');
-        }
+    // Set up click handlers
+    if (dashboardLink) {
+        dashboardLink.addEventListener('click', function() {
+            activateNavLink(this);
+            handleNavigation('Dashboard');
+        });
+    }
+    
+    if (historyLink) {
+        historyLink.addEventListener('click', function() {
+            activateNavLink(this);
+            handleNavigation('Notification History');
+        });
+    }
+    
+    if (preferencesLink) {
+        preferencesLink.addEventListener('click', function() {
+            activateNavLink(this);
+            handleNavigation('User Preferences');
+        });
+    }
+    
+    if (audiencesLink) {
+        audiencesLink.addEventListener('click', function() {
+            activateNavLink(this);
+            handleNavigation('Audience Config');
+        });
+    }
+    
+    if (helpLink) {
+        helpLink.addEventListener('click', function() {
+            activateNavLink(this);
+            handleNavigation('Help');
+        });
+    }
+    
+    // Activate the dashboard link by default if we're on the main page
+    const currentPath = window.location.pathname;
+    if (currentPath === '/' || currentPath === '') {
+        dashboardLink && dashboardLink.classList.add('active');
+    }
+    
+    // Check if URL has a hash and navigate to that section
+    const hash = window.location.hash;
+    if (hash) {
+        const sectionName = hash.substring(1); // Remove the # from the hash
         
-        // Add click handler for navigation links that use hash
-        if (link.getAttribute('href').startsWith('#')) {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Remove active class from all links
-                navLinks.forEach(l => l.classList.remove('active'));
-                
-                // Add active class to clicked link
-                this.classList.add('active');
-                
-                // Update header title
-                const headerTitle = document.querySelector('.header-title');
-                const linkText = this.textContent.trim();
-                
-                if (headerTitle) {
-                    headerTitle.textContent = linkText + ' Dashboard';
-                }
-                
-                // Show appropriate section based on link text
-                handleNavigation(linkText);
-            });
+        // Map hash to section name
+        const sections = {
+            'notification-history': 'Notification History',
+            'preferences': 'User Preferences',
+            'audiences': 'Audience Config',
+            'help': 'Help'
+        };
+        
+        if (sections[sectionName]) {
+            // Activate the corresponding link
+            switch(sectionName) {
+                case 'notification-history':
+                    historyLink && activateNavLink(historyLink);
+                    break;
+                case 'preferences':
+                    preferencesLink && activateNavLink(preferencesLink);
+                    break;
+                case 'audiences':
+                    audiencesLink && activateNavLink(audiencesLink);
+                    break;
+                case 'help':
+                    helpLink && activateNavLink(helpLink);
+                    break;
+            }
+            
+            // Navigate to the section
+            handleNavigation(sections[sectionName]);
         }
-    });
+    }
     
     // Refresh dashboard button
     const refreshBtn = document.getElementById('refresh-dashboard');
@@ -142,6 +181,27 @@ function initNavigation() {
             console.log('Showing help dialog');
             showHelpDialog();
         });
+    }
+}
+
+/**
+ * Activate a navigation link and deactivate others
+ * @param {HTMLElement} link The link to activate
+ */
+function activateNavLink(link) {
+    // Remove active class from all links
+    const navLinks = document.querySelectorAll('.sidebar-nav a');
+    navLinks.forEach(l => l.classList.remove('active'));
+    
+    // Add active class to the clicked link
+    link.classList.add('active');
+    
+    // Update header title
+    const headerTitle = document.querySelector('.header-title');
+    const linkText = link.textContent.trim();
+    
+    if (headerTitle) {
+        headerTitle.textContent = linkText + ' Dashboard';
     }
 }
 
@@ -184,6 +244,8 @@ function handleNavigation(section) {
                 const isAdmin = document.getElementById('sidebar-user-role').textContent === 'Administrator';
                 adminSection.style.display = isAdmin ? 'block' : 'none';
             }
+            // Update URL hash
+            history.pushState(null, null, '#dashboard');
             break;
             
         case 'Notification History':
@@ -202,9 +264,11 @@ function handleNavigation(section) {
                     historyCard.classList.remove('highlight');
                 }, 1500);
             }
+            // Update URL hash
+            history.pushState(null, null, '#notification-history');
             break;
             
-        case 'Audiences':
+        case 'Audience Config':
             // Show only audience configuration section
             personalSection.style.display = 'none';
             toolsSection.style.display = 'none';
@@ -220,6 +284,8 @@ function handleNavigation(section) {
                         audienceCard.classList.remove('highlight');
                     }, 1500);
                 }
+                // Update URL hash
+                history.pushState(null, null, '#audiences');
             } else {
                 alert('Administrator privileges required to access audience configuration');
                 // Revert to dashboard
@@ -227,7 +293,7 @@ function handleNavigation(section) {
             }
             break;
             
-        case 'Settings':
+        case 'User Preferences':
             // Show only settings section
             personalSection.style.display = 'block';
             toolsSection.style.display = 'none';
@@ -243,11 +309,14 @@ function handleNavigation(section) {
                     preferencesCard.classList.remove('highlight');
                 }, 1500);
             }
+            // Update URL hash
+            history.pushState(null, null, '#preferences');
             break;
             
         case 'Help':
             // Show help dialog and stay on current page
             showHelpDialog();
+            // Don't update URL hash for help dialog
             break;
             
         default:
@@ -689,38 +758,52 @@ function initTestNotification() {
  * @param {Array} audience Audience array
  */
 function sendTestNotification(title, message, severity, audience) {
-    // Prepare notification payload
-    const payload = {
-        title: title.trim(),
-        message: message.trim(),
-        severity,
-        audience
-    };
+    // Create form data instead of JSON to avoid parsing issues
+    const formData = new FormData();
+    formData.append('title', title.trim());
+    formData.append('message', message.trim());
+    formData.append('severity', severity);
     
-    console.log('Sending test notification with payload:', payload);
+    // Add each audience item as a separate form field to ensure proper array handling
+    audience.forEach(item => {
+        formData.append('audience', item);
+    });
+    
+    console.log('Sending test notification with form data');
     
     // Determine the base URL prefix
     const baseUrlPrefix = getBaseUrlPrefix();
     
-    // Send notification request
+    // Send notification request using FormData
     fetch(`${baseUrlPrefix}/notify`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
+        body: formData
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'ok') {
-            showTestResult(`Notification sent successfully to ${data.routed_count} services!`, true);
+    .then(response => {
+        // Handle non-JSON responses gracefully
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            return response.json().then(data => ({ ok: response.ok, data }));
+        } else {
+            return response.text().then(text => ({ 
+                ok: response.ok, 
+                data: { 
+                    status: response.ok ? 'ok' : 'error',
+                    message: text
+                }
+            }));
+        }
+    })
+    .then(({ ok, data }) => {
+        if (ok && data.status === 'ok') {
+            showTestResult(`Notification sent successfully to ${data.routed_count || '?'} services!`, true);
             
             // Update the notification history (simulated)
             updateNotificationHistory(title, message, severity);
         } else if (data.status === 'duplicate') {
             showTestResult('Duplicate notification: ' + data.message, false);
         } else {
-            showTestResult('Error: ' + data.message, false);
+            showTestResult('Error: ' + (data.message || 'Unknown error'), false);
         }
     })
     .catch(error => {
