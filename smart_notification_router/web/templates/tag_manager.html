@@ -280,16 +280,29 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <i class="mdi mdi-bell-ring"></i>
-                <span>Smart Notifications</span>
+                <i class="mdi mdi-bell-ring-outline"></i>
+                <span>Smart Notification Router</span>
             </div>
             
             <ul class="sidebar-nav">
-                <li><a href="{{ url_for('index', _external=True) }}" style="cursor:pointer"><i class="mdi mdi-view-dashboard"></i> Dashboard</a></li>
-                <li><a href="{{ url_for('tag_manager', _external=True) }}" class="active" style="cursor:pointer"><i class="mdi mdi-tag-multiple"></i> Tag Manager (v2)</a></li>
-                <li><a href="{{ url_for('request_debug', _external=True) }}"><i class="mdi mdi-bug"></i> Debug Info</a></li>
-                <li><a href="{{ url_for('routes', _external=True) }}"><i class="mdi mdi-routes"></i> View Routes</a></li>
-                <li><a href="{{ url_for('simple_tag_manager', _external=True) }}"><i class="mdi mdi-tag-outline"></i> Simple Tag Manager</a></li>
+                <!-- Main Navigation -->
+                <li><a href="{{ url_for('index', _external=True) }}"><i class="mdi mdi-view-dashboard"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('index', _external=True) }}#notification-history"><i class="mdi mdi-history"></i> Notification History</a></li>
+                <li><a href="{{ url_for('index', _external=True) }}#settings"><i class="mdi mdi-account-cog"></i> User Preferences</a></li>
+                
+                <!-- Admin Functions -->
+                <li><a href="{{ url_for('index', _external=True) }}#audiences"><i class="mdi mdi-account-group"></i> Audience Config</a></li>
+                
+                <!-- Tag Management -->
+                <li><a href="{{ url_for('tag_manager', _external=True) }}" class="active"><i class="mdi mdi-tag-multiple"></i> Tag Manager</a></li>
+                
+                <!-- Help & Support -->
+                <li><a href="{{ url_for('index', _external=True) }}#help"><i class="mdi mdi-help-circle"></i> Help</a></li>
+                
+                <!-- Debug Tools (hidden in production) -->
+                <li class="debug-link" style="display: none;"><a href="{{ url_for('routes', _external=True) }}"><i class="mdi mdi-routes"></i> Debug Routes</a></li>
+                <li class="debug-link" style="display: none;"><a href="{{ url_for('request_debug', _external=True) }}"><i class="mdi mdi-bug"></i> Debug Info</a></li>
+                <li class="debug-link" style="display: none;"><a href="{{ url_for('simple_tag_manager', _external=True) }}"><i class="mdi mdi-tag-outline"></i> Simple Tag Manager</a></li>
             </ul>
             
             <div class="user-info" id="sidebar-user-info">

@@ -94,9 +94,14 @@
             transition: background-color 0.2s;
         }
 
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active {
+        .sidebar-nav a:hover {
             background-color: rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-nav a.active {
+            background-color: rgba(255,255,255,0.2);
+            border-left: 4px solid white;
+            padding-left: 16px;
         }
 
         .sidebar-nav i {
@@ -147,8 +152,9 @@
         }
 
         .header-title {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 500;
+            color: var(--primary-color);
         }
 
         .header-actions {
@@ -245,6 +251,12 @@
         .system-status-card {
             display: flex;
             flex-direction: column;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        /* Add pulsing highlight when a card is targeted via navigation */
+        .card.highlight {
+            border: 2px solid var(--primary-color);
         }
 
         .card-header {
@@ -506,20 +518,29 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <i class="mdi mdi-bell-ring"></i>
-                <span>Smart Notifications</span>
+                <i class="mdi mdi-bell-ring-outline"></i>
+                <span>Smart Notification Router</span>
             </div>
             
             <ul class="sidebar-nav">
+                <!-- Main Navigation -->
                 <li><a href="/" class="active"><i class="mdi mdi-view-dashboard"></i> Dashboard</a></li>
-                <li><a href="/tag-manager"><i class="mdi mdi-tag-multiple"></i> Tag Manager (v2)</a></li>
-                <li><a href="/simple-tag-manager"><i class="mdi mdi-tag"></i> Simple Tag Manager</a></li>
-                <li><a href="/routes"><i class="mdi mdi-routes"></i> Debug Routes</a></li>
-                <li><a href="/debug"><i class="mdi mdi-bug"></i> Debug Info</a></li>
-                <li><a href="#"><i class="mdi mdi-history"></i> Notification History</a></li>
-                <li><a href="#"><i class="mdi mdi-account-group"></i> Audiences</a></li>
-                <li><a href="#"><i class="mdi mdi-settings"></i> Settings</a></li>
-                <li><a href="#"><i class="mdi mdi-help-circle"></i> Help</a></li>
+                <li><a href="#notification-history"><i class="mdi mdi-history"></i> Notification History</a></li>
+                <li><a href="#settings"><i class="mdi mdi-account-cog"></i> User Preferences</a></li>
+                
+                <!-- Admin Functions -->
+                <li><a href="#audiences"><i class="mdi mdi-account-group"></i> Audience Config</a></li>
+                
+                <!-- Tag Management -->
+                <li><a href="/tag-manager"><i class="mdi mdi-tag-multiple"></i> Tag Manager</a></li>
+                
+                <!-- Help & Support -->
+                <li><a href="#help"><i class="mdi mdi-help-circle"></i> Help</a></li>
+                
+                <!-- Debug Tools (hidden in production) -->
+                <li class="debug-link" style="display: none;"><a href="/routes"><i class="mdi mdi-routes"></i> Debug Routes</a></li>
+                <li class="debug-link" style="display: none;"><a href="/debug"><i class="mdi mdi-bug"></i> Debug Info</a></li>
+                <li class="debug-link" style="display: none;"><a href="/simple-tag-manager"><i class="mdi mdi-tag-outline"></i> Simple Tag Manager</a></li>
             </ul>
             
             <div class="user-info" id="sidebar-user-info">
@@ -535,7 +556,7 @@
         
         <!-- Header -->
         <header class="header">
-            <h1 class="header-title">Notification Dashboard</h1>
+            <h1 class="header-title">Smart Notification Dashboard</h1>
             
             <div class="header-actions">
                 <button class="header-btn" id="refresh-dashboard" title="Refresh"><i class="mdi mdi-refresh"></i></button>

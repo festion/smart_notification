@@ -15,12 +15,55 @@ document.addEventListener('DOMContentLoaded', function() {
     initAudiencesUI();
     initNavigation();
     initButtons();
+    initDebugMode();
     
     // Poll status every 30 seconds
     setInterval(checkStatus, 30000);
     
     console.log('Dashboard initialization complete');
 });
+
+/**
+ * Initialize debug mode functionality
+ * Press Ctrl+Shift+D to toggle debug links visibility
+ */
+function initDebugMode() {
+    // Check if we should enable debug mode by default
+    const debugParam = new URLSearchParams(window.location.search).get('debug');
+    if (debugParam === 'true' || debugParam === '1') {
+        toggleDebugLinks(true);
+    }
+    
+    // Add keyboard shortcut for debug mode
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+Shift+D to toggle debug mode
+        if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+            e.preventDefault();
+            toggleDebugLinks();
+        }
+    });
+}
+
+/**
+ * Toggle visibility of debug links
+ * @param {boolean} [forceShow] Force show or hide
+ */
+function toggleDebugLinks(forceShow) {
+    const debugLinks = document.querySelectorAll('.debug-link');
+    const currentState = debugLinks[0]?.style.display !== 'none';
+    
+    const newState = forceShow !== undefined ? forceShow : !currentState;
+    
+    debugLinks.forEach(link => {
+        link.style.display = newState ? 'block' : 'none';
+    });
+    
+    if (newState) {
+        console.log('Debug mode enabled - debug links are now visible');
+    } else {
+        console.log('Debug mode disabled - debug links are now hidden');
+    }
+}
 
 /**
  * Initialize navigation functionality

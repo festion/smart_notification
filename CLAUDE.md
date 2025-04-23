@@ -76,6 +76,16 @@ The add-on integrates with Home Assistant using:
 
 ## Release History
 
+### v1.0.36
+- Redesigned navigation sidebar with improved structure
+- Added debug mode toggle with keyboard shortcut (Ctrl+Shift+D)
+- Improved visual feedback for active navigation items
+- Enhanced UI consistency across all pages
+- Updated logo and product name in header
+- Added highlighting effect for navigation targets
+- Cleaned up legacy navigation items from v1.0
+- Improved styling for dashboard elements
+
 ### v1.0.35
 - Completely rebuilt GUI navigation system with section switching
 - Added fully functional button interactions across the dashboard
