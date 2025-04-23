@@ -20,6 +20,17 @@
             --card-bg: #ffffff;
             --accent-color: #ff9800;
         }
+        
+        /* Add highlight animation for navigation focus */
+        @keyframes highlight-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(3, 169, 244, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(3, 169, 244, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(3, 169, 244, 0); }
+        }
+        
+        .highlight {
+            animation: highlight-pulse 1.5s ease-out;
+        }
 
         body {
             margin: 0;
