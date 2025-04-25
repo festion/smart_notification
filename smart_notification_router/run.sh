@@ -1,33 +1,10 @@
-#!/usr/bin/with-contenv bashio
+#!/bin/bash
 
-bashio::log.info "Starting Smart Notification Router service..."
-
-# Fix Flask's debug parameter issue by creating a monkey patch
-bashio::log.info "Fixing line endings for run.sh..."
-bashio::log.debug "Script permissions:"
-ls -la /app/run.sh
-bashio::log.info "Checking script shebang line:"
-head -n 1 /app/run.sh
-
-bashio::log.info "Executing run.sh"
-bashio::log.info "Starting Smart Notification Router..."
-bashio::log.info "Setting up directories..."
-bashio::log.debug "Environment variables:"
-env | sort
-
-bashio::log.info "Checking Python installation..."
-bashio::log.info "Checking Python packages..."
-bashio::log.info "Checking tag_routing module..."
-
-# Check if tag_routing module is available
-if python3 -c "import importlib.util; print('1' if importlib.util.find_spec('tag_routing') else '0')" | grep -q "1"; then
-    bashio::log.info "Found tag_routing module"
-else
-    bashio::log.warning "tag_routing module not found, continuing without tag-based routing features"
-fi
+# Simpler run script that doesn't depend on bashio
+echo "[INFO] Starting Smart Notification Router service..."
+echo "[INFO] Generating configuration file from add-on options..."
 
 # Generate config from options
-bashio::log.info "Generating configuration file from add-on options..."
 python3 << "EOL"
 import json
 import yaml
@@ -98,30 +75,8 @@ except Exception as e:
     sys.exit(1)
 EOL
 
-# Check for application directory
-bashio::log.info "Checking application directory..."
-if [ ! -d "/app" ]; then
-    bashio::log.error "Application directory not found!"
-    exit 1
-fi
-
-# Check that directory has proper permissions
-bashio::log.info "Checking permissions..."
-if [ ! -w "/app" ]; then
-    bashio::log.warning "Application directory is not writable, some features may not work correctly"
-fi
-
-# Check for templates
-bashio::log.info "Checking template locations..."
-if [ -d "/app/web/templates" ]; then
-    bashio::log.info "Templates found: total $(find /app/web/templates -type f | wc -l)"
-    ls -la /app/web/templates
-else
-    bashio::log.warning "Template directory not found, UI may not display correctly"
-fi
-
 # Process audience_config if present
-bashio::log.info "Processing audience_config if present..."
+echo "[INFO] Processing audience_config if present..."
 python3 << "EOL"
 import json
 import os
@@ -139,11 +94,9 @@ if os.path.exists(options_file):
         print(f"Warning: Could not parse audience_config: {e}")
 EOL
 
-# Create a Flask patch to handle the debug parameter issue
-bashio::log.info "Starting Flask application listening on all interfaces..."
-bashio::log.info "Running: python3 /app/main.py with host 0.0.0.0"
-
 # Apply monkey patch to fix Flask run_simple issue with debug parameter
+echo "[INFO] Starting Flask application with debug parameter patch..."
+
 python3 -c "
 import flask
 import types

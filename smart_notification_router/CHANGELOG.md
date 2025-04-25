@@ -1,5 +1,12 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.32.2 (2025-04-25)
+- Fixed bashio command not found errors in run.sh script
+- Replaced bashio logging with standard echo for maximum compatibility
+- Simplified startup script to work in all container environments
+- Fixed run service script to use bash directly instead of bashio
+- Maintained Flask debug parameter patch from v2.0.0-alpha.32.1
+
 ## v2.0.0-alpha.32.1 (2025-04-25)
 - Fixed critical Flask startup error: "TypeError: run_simple() got an unexpected keyword argument 'debug'"
 - Restored the monkey patch solution from v2.0.0-alpha.29 that was accidentally removed
