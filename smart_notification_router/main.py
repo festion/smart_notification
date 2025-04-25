@@ -1,1245 +1,445 @@
+#!/usr/bin/env python3
+import os
 import time
-import json
-import yaml
-import hashlib
-import os
-from flask import Flask, request, jsonify, render_template, redirect, url_for
 import logging
-import threading
+import json
+import hashlib
+import yaml
+import datetime
+from flask import Flask, request, jsonify, send_from_directory, render_template, Response
 
-# For module imports, prepare the path
-import sys
-import os
-
-# Add current directory to path so we can import tag_routing as a module
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-# Import tag-based routing system
-try:
-    # Try relative import first
-    import tag_routing.integration
-    initialize_tag_routing = tag_routing.integration.initialize_tag_routing
-    register_tag_routing_endpoints = tag_routing.integration.register_tag_routing_endpoints
-    logger = logging.getLogger('smart_notification')
-    logger.info("Successfully imported tag_routing module (relative)")
-except ImportError as e:
-    logger = logging.getLogger('smart_notification')
-    logger.warning(f"Cannot import tag_routing module: {e}. V2 features will be disabled.")
-    
-    # Create dummy functions for compatibility
-    def initialize_tag_routing(config):
-        return {}
-        
-    def register_tag_routing_endpoints(app):
-        pass
-
-# Configure logging
+# Set up logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger('smart_notification')
+logger = logging.getLogger("smart_notification_router")
 
-# Configuration paths
-CONFIG_FILE = "/config/notification_config.yaml"
-OPTIONS_FILE = "/data/options.json"
+# Initialize Flask app
+app = Flask(__name__, static_folder='web/static', template_folder='web/templates')
 
-# Default values
+# Default configuration
 DEFAULT_CONFIG = {
-    "audiences": {
-        "mobile": {
-            "services": ["notify.mobile_app"],
-            "min_severity": "high"
+    'audiences': {
+        'mobile': {
+            'services': ['notify.mobile_app_default'],
+            'min_severity': 'high',
+            'description': 'Mobile device notifications'
         },
-        "dashboard": {
-            "services": ["persistent_notification.create"],
-            "min_severity": "low"
+        'dashboard': {
+            'services': ['persistent_notification.create'],
+            'min_severity': 'low',
+            'description': 'Home Assistant dashboard notifications'
         }
     },
-    "severity_levels": ["low", "medium", "high", "emergency"]
+    'severity_levels': ['low', 'medium', 'high', 'emergency']
 }
 
-# Initialize variables
-config = DEFAULT_CONFIG.copy()
-DEDUPLICATION_TTL = 300  # seconds
-SENT_MESSAGES = {}
+# In-memory message cache for deduplication
+message_cache = {}
+deduplication_ttl = 300  # default: 5 minutes (300 seconds)
+notification_history = []  # Store recent notifications
 
-# User context (will be populated from Home Assistant)
-CURRENT_USER = {
-    "id": "default",
-    "name": "Default User",
-    "is_admin": False,
-    "audiences": ["mobile", "dashboard"],
-    "preferences": {
-        "min_severity": "low",
-        "notifications_enabled": True,
-        "notification_services": ["notify.mobile_app_default"]
-    }
-}
-
-app = Flask(__name__, 
-    static_folder='/app/web/static',
-    template_folder='/app/web/templates')
-    
-# Print detailed debugging about app configuration
-print(f"Flask app created with static_folder={app.static_folder}, template_folder={app.template_folder}")
-print(f"Static URL path: {app.static_url_path}")
-    
-# Configure for reverse proxy/ingress
-app.config['APPLICATION_ROOT'] = '/'
-app.config['PREFERRED_URL_SCHEME'] = 'http'
-
-# Support Home Assistant ingress by properly handling the script_name and path_info
-class ReverseProxied(object):
-    """Wrap the application in this middleware to handle multiple layers of reverse proxies"""
-    def __init__(self, app):
-        self.app = app
-
-    def __call__(self, environ, start_response):
-        # Handle various proxy headers that might be present
-        # These could come from Home Assistant ingress, NPM, or other proxies
-
-        # First, check for X-Forwarded-Host, which NPM might set
-        forwarded_host = environ.get('HTTP_X_FORWARDED_HOST', '')
-        if forwarded_host:
-            environ['HTTP_HOST'] = forwarded_host
-
-        # Check for X-Forwarded-For to get the original client IP
-        forwarded_for = environ.get('HTTP_X_FORWARDED_FOR', '')
-        if forwarded_for:
-            environ['REMOTE_ADDR'] = forwarded_for.split(',')[0].strip()
-            
-        # Check for X-Forwarded-Proto to handle https
-        scheme = environ.get('HTTP_X_FORWARDED_PROTO', '')
-        if scheme:
-            environ['wsgi.url_scheme'] = scheme
-            
-        # Look for X-Forwarded-Prefix or X-Script-Name which NPM might use
-        script_name = environ.get('HTTP_X_FORWARDED_PREFIX', '')
-        if not script_name:
-            script_name = environ.get('HTTP_X_SCRIPT_NAME', '')
-            
-        # Also check Home Assistant specific headers
-        if not script_name:
-            script_name = environ.get('HTTP_X_INGRESS_PATH', '')
-        
-        # Apply the script_name if found
-        if script_name:
-            # Store the original for debugging
-            environ['HTTP_ORIGINAL_SCRIPT_NAME'] = environ.get('SCRIPT_NAME', '')
-            environ['HTTP_ORIGINAL_PATH_INFO'] = environ.get('PATH_INFO', '')
-            
-            # Update the SCRIPT_NAME
-            environ['SCRIPT_NAME'] = script_name
-            
-            # Fix PATH_INFO if it starts with the script_name
-            path_info = environ.get('PATH_INFO', '')
-            if path_info.startswith(script_name):
-                environ['PATH_INFO'] = path_info[len(script_name):]
-        
-        # Log proxy headers for debugging in development
-        if os.environ.get('FLASK_ENV') == 'development':
-            proxy_headers = {k: v for k, v in environ.items() if k.startswith('HTTP_X_')}
-            if proxy_headers:
-                print("Proxy headers:", proxy_headers)
-                print("SCRIPT_NAME:", environ.get('SCRIPT_NAME', ''))
-                print("PATH_INFO:", environ.get('PATH_INFO', ''))
-            
-        return self.app(environ, start_response)
-
-# Apply the reverse proxy middleware
-app.wsgi_app = ReverseProxied(app.wsgi_app)
-
-# Set up proper URL defaults
-app.config['SERVER_NAME'] = None
-
-def load_options():
-    """Load options from the add-on configuration"""
-    global DEDUPLICATION_TTL, config
-    try:
-        if os.path.exists(OPTIONS_FILE):
-            with open(OPTIONS_FILE, "r") as f:
-                options = json.load(f)
-                
-                # Set deduplication TTL
-                DEDUPLICATION_TTL = options.get("deduplication_ttl", 300)
-                
-                # Handle audiences from the audience_config if present
-                if "audience_config" in options:
-                    logger.debug(f"Found audience_config in options: {type(options['audience_config'])}")
-                    
-                    # audience_config is always a string in the schema, so try to parse it
-                    try:
-                        import json
-                        
-                        # Parse the audience_config as JSON
-                        parsed_audiences = json.loads(options["audience_config"])
-                        
-                        if isinstance(parsed_audiences, dict):
-                            # Create/reset audiences in config
-                            if "audiences" not in config or not isinstance(config["audiences"], dict):
-                                config["audiences"] = {}
-                            
-                            # Update each audience from parsed JSON
-                            for audience_name, audience_data in parsed_audiences.items():
-                                if isinstance(audience_data, dict):
-                                    config["audiences"][audience_name] = audience_data
-                                    logger.debug(f"Added audience from audience_config: {audience_name}")
-                        
-                        logger.info(f"Successfully loaded {len(parsed_audiences)} audiences from audience_config")
-                        
-                    except Exception as e:
-                        logger.error(f"Failed to parse audience_config as JSON: {e}")
-                        logger.error(f"audience_config value: {options['audience_config']}")
-                
-                # Legacy support for direct audiences object
-                elif "audiences" in options:
-                    logger.debug(f"Found legacy audiences in options: {type(options['audiences'])}")
-                    
-                    # Handle audiences based on type
-                    if isinstance(options["audiences"], dict):
-                        # Dictionary case - direct usage
-                        if "audiences" not in config or not isinstance(config["audiences"], dict):
-                            config["audiences"] = {}
-                            
-                        # Update each audience from options
-                        for audience_name, audience_data in options["audiences"].items():
-                            if isinstance(audience_data, dict):
-                                config["audiences"][audience_name] = audience_data
-                                logger.debug(f"Added audience from legacy options: {audience_name}")
-                    elif isinstance(options["audiences"], str):
-                        # String case - try to parse as JSON
-                        try:
-                            import json
-                            parsed_audiences = json.loads(options["audiences"])
-                            if isinstance(parsed_audiences, dict):
-                                if "audiences" not in config or not isinstance(config["audiences"], dict):
-                                    config["audiences"] = {}
-                                
-                                for audience_name, audience_data in parsed_audiences.items():
-                                    if isinstance(audience_data, dict):
-                                        config["audiences"][audience_name] = audience_data
-                                        logger.debug(f"Added audience from legacy JSON string: {audience_name}")
-                        except Exception as e:
-                            logger.warning(f"Could not parse legacy audiences string as JSON: {e}")
-                
-                # Handle severity levels if present
-                if "severity_levels" in options and isinstance(options["severity_levels"], list):
-                    config["severity_levels"] = options["severity_levels"]
-                    
-                return options
-        return {}
-    except Exception as e:
-        logger.error(f"Error loading options: {e}")
-        return {}
-
+# Load configuration from YAML file
 def load_config():
-    """Load notification configuration"""
-    global config
-    try:
-        if os.path.exists(CONFIG_FILE):
-            with open(CONFIG_FILE, "r") as f:
-                loaded_config = yaml.safe_load(f)
-                if loaded_config:
-                    # Validate and fix the config structure if needed
-                    if not isinstance(loaded_config, dict):
-                        logger.error(f"Invalid config format - not a dictionary: {type(loaded_config)}")
-                        return DEFAULT_CONFIG
-                    
-                    # Ensure audiences is a dictionary
-                    if "audiences" not in loaded_config:
-                        logger.warning("No audiences in config, using defaults")
-                        loaded_config["audiences"] = DEFAULT_CONFIG["audiences"]
-                    elif not isinstance(loaded_config["audiences"], dict):
-                        logger.warning(f"Invalid audiences format: {type(loaded_config['audiences'])}, using defaults")
-                        loaded_config["audiences"] = DEFAULT_CONFIG["audiences"]
-                    
-                    # Ensure severity_levels is a list
-                    if "severity_levels" not in loaded_config:
-                        logger.warning("No severity levels in config, using defaults")
-                        loaded_config["severity_levels"] = DEFAULT_CONFIG["severity_levels"]
-                    elif not isinstance(loaded_config["severity_levels"], list):
-                        logger.warning(f"Invalid severity_levels format: {type(loaded_config['severity_levels'])}, using defaults")
-                        loaded_config["severity_levels"] = DEFAULT_CONFIG["severity_levels"]
-                    
-                    config = loaded_config
-                    logger.info("Configuration loaded successfully")
-                    return config
-        else:
-            # If config file doesn't exist, create it with defaults
-            os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
-            with open(CONFIG_FILE, "w") as f:
-                yaml.dump(DEFAULT_CONFIG, f, default_flow_style=False)
-            logger.info("Created default configuration file")
-    except Exception as e:
-        logger.error(f"Error loading config: {e}")
+    config_path = os.path.join(os.path.dirname(__file__), 'notification_config.yaml')
+    if os.path.exists(config_path):
+        with open(config_path, 'r') as file:
+            try:
+                config = yaml.safe_load(file)
+                logger.info(f"Configuration loaded from {config_path}")
+                return config
+            except Exception as e:
+                logger.error(f"Error loading configuration: {e}")
     
-    return config
+    logger.warning("Using default configuration")
+    return DEFAULT_CONFIG
 
-def save_config():
-    """Save notification configuration"""
-    try:
-        os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
-        with open(CONFIG_FILE, "w") as f:
-            yaml.dump(config, f, default_flow_style=False)
-        logger.info("Configuration saved successfully")
-        return True
-    except Exception as e:
-        logger.error(f"Error saving config: {e}")
-        return False
+# Get current configuration
+config = load_config()
 
-def get_hash(payload):
-    """Create a hash for deduplication"""
-    base = json.dumps(payload, sort_keys=True)
-    return hashlib.sha256(base.encode()).hexdigest()
+# Helper function to check message deduplication
+def is_duplicate(message_data):
+    message_hash = hashlib.sha256(
+        f"{message_data.get('title', '')}-{message_data.get('message', '')}-{','.join(message_data.get('audience', []))}".encode()
+    ).hexdigest()
+    
+    current_time = time.time()
+    if message_hash in message_cache:
+        if current_time - message_cache[message_hash] < deduplication_ttl:
+            return True
+    
+    # Update cache with new timestamp
+    message_cache[message_hash] = current_time
+    return False
 
-@app.route("/")
+# Clean expired cache entries periodically
+def clean_message_cache():
+    current_time = time.time()
+    expired_keys = []
+    for key, timestamp in message_cache.items():
+        if current_time - timestamp > deduplication_ttl:
+            expired_keys.append(key)
+    
+    for key in expired_keys:
+        del message_cache[key]
+
+# Main web UI
+@app.route('/')
 def index():
-    """Web UI home page"""
-    # Get the current config
-    current_config = load_config()
-    audiences = current_config.get("audiences", {})
-    severity_levels = current_config.get("severity_levels", ["low", "medium", "high", "emergency"])
-    
-    # Log important information
-    logger.info(f"Rendering direct HTML with {len(audiences)} audiences and {len(severity_levels)} severity levels")
-    
-    # Create direct HTML response - bypassing template system
-    html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Notification Router v2.0.0-alpha.27</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css">
-    <style>
-        /* Reset and basic styles */
-        * {{
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }}
-        
-        body {{
-            font-family: Roboto, "Segoe UI", Arial, sans-serif;
-            font-size: 16px;
-            line-height: 1.5;
-            background: #f5f5f5;
-            color: #212121;
-            margin: 0;
-            padding: 0;
-        }}
-        
-        /* Container layout */
-        .container {{
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-        }}
-        
-        /* Status dashboard */
-        .status-info {{
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }}
-        
-        h1 {{
-            color: #03a9f4;
-            margin-bottom: 20px;
-        }}
-        
-        h2 {{
-            color: #03a9f4;
-            margin-bottom: 15px;
-        }}
-        
-        /* Test notification form */
-        .test-notification {{
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }}
-        
-        .form-group {{
-            margin-bottom: 15px;
-        }}
-        
-        label {{
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }}
-        
-        input, select, textarea {{
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }}
-        
-        button {{
-            background-color: #03a9f4;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 10px 20px;
-            font-size: 14px;
-            cursor: pointer;
-            margin-top: 10px;
-        }}
-        
-        button:hover {{
-            background-color: #0288d1;
-        }}
-        
-        /* Audience checkboxes */
-        .checkbox-container {{
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-        }}
-        
-        .checkbox-container input {{
-            width: auto;
-            margin-right: 8px;
-        }}
-        
-        /* Status indicator */
-        .status-indicator {{
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }}
-        
-        .status-indicator i {{
-            margin-right: 8px;
-        }}
-        
-        .status-online {{
-            color: #4caf50;
-        }}
-        
-        .status-offline {{
-            color: #f44336;
-        }}
-        
-        /* Message styles */
-        .success-message {{
-            background-color: rgba(76, 175, 80, 0.1);
-            color: #388e3c;
-            border: 1px solid #4caf50;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 15px;
-            display: none;
-        }}
-        
-        .error-message {{
-            background-color: rgba(244, 67, 54, 0.1);
-            color: #d32f2f;
-            border: 1px solid #f44336;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 15px;
-            display: none;
-        }}
-        
-        /* Links */
-        .debug-links {{
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }}
-        
-        .debug-links a {{
-            color: #03a9f4;
-            text-decoration: none;
-            display: inline-block;
-            margin-right: 15px;
-        }}
-        
-        .debug-links a:hover {{
-            text-decoration: underline;
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1><i class="mdi mdi-bell-ring"></i> Smart Notification Router</h1>
-        
-        <div class="status-info">
-            <h2>System Status</h2>
-            
-            <div class="status-indicator">
-                <i class="mdi mdi-circle status-online" id="status-indicator"></i>
-                <span id="status-text">Checking status...</span>
-            </div>
-            
-            <div>
-                <strong>Deduplication Time:</strong> <span id="dedup-time">{DEDUPLICATION_TTL}</span> seconds
-            </div>
-            
-            <div>
-                <strong>Active Messages:</strong> <span id="active-messages">0</span>
-            </div>
-            
-            <div>
-                <strong>Version:</strong> 2.0.0-alpha.27
-            </div>
-        </div>
-        
-        <div class="test-notification">
-            <h2>Send Test Notification</h2>
-            
-            <form id="test-form">
-                <div class="form-group">
-                    <label for="test-title">Title</label>
-                    <input type="text" id="test-title" placeholder="Notification Title">
-                </div>
-                
-                <div class="form-group">
-                    <label for="test-message">Message</label>
-                    <textarea id="test-message" rows="3" placeholder="Notification Message"></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="test-severity">Severity</label>
-                    <select id="test-severity">
-                        {"".join([f'<option value="{level}">{level.capitalize()}</option>' for level in severity_levels])}
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>Target Audiences</label>
-                    <div id="audience-checkboxes">
-                        {"".join([f'<div class="checkbox-container"><input type="checkbox" name="test_audience" value="{name}" id="audience-{name}"><label for="audience-{name}">{name}</label></div>' for name in audiences.keys()])}
-                    </div>
-                </div>
-                
-                <button type="button" id="send-test">Send Test Notification</button>
-            </form>
-            
-            <div id="test-result" class="success-message"></div>
-        </div>
-        
-        <div class="debug-links">
-            <h3>Debug Tools</h3>
-            <a href="/debug">Debug Info</a>
-            <a href="/emergency">Emergency UI</a>
-            <a href="/routes">Available Routes</a>
-            <a href="/status">System Status</a>
-            <a href="/services">Notification Services</a>
-        </div>
-    </div>
-    
-    <script>
-        // Check system status
-        function checkStatus() {{
-            fetch('/status')
-                .then(response => response.json())
-                .then(data => {{
-                    const statusIndicator = document.getElementById('status-indicator');
-                    const statusText = document.getElementById('status-text');
-                    const dedupTime = document.getElementById('dedup-time');
-                    const activeMessages = document.getElementById('active-messages');
-                    
-                    if (data.status === 'running') {{
-                        statusIndicator.className = 'mdi mdi-circle status-online';
-                        statusText.textContent = 'Online';
-                    }} else {{
-                        statusIndicator.className = 'mdi mdi-circle status-offline';
-                        statusText.textContent = 'Offline';
-                    }}
-                    
-                    dedupTime.textContent = data.deduplication_ttl;
-                    activeMessages.textContent = data.message_count;
-                }})
-                .catch(error => {{
-                    console.error('Status check failed:', error);
-                    const statusIndicator = document.getElementById('status-indicator');
-                    const statusText = document.getElementById('status-text');
-                    
-                    statusIndicator.className = 'mdi mdi-circle status-offline';
-                    statusText.textContent = 'Offline';
-                }});
-        }}
-        
-        // Send test notification
-        function sendTestNotification() {{
-            const title = document.getElementById('test-title').value;
-            const message = document.getElementById('test-message').value;
-            const severity = document.getElementById('test-severity').value;
-            
-            const audienceChecks = document.querySelectorAll('input[name="test_audience"]:checked');
-            const audience = Array.from(audienceChecks).map(check => check.value);
-            
-            if (!title || !message) {{
-                showResult('Please provide both title and message', false);
-                return;
-            }}
-            
-            if (audience.length === 0) {{
-                showResult('Please select at least one audience', false);
-                return;
-            }}
-            
-            // Create FormData for submission
-            const formData = new FormData();
-            formData.append('title', title.trim());
-            formData.append('message', message.trim());
-            formData.append('severity', severity);
-            
-            audience.forEach(item => {{
-                formData.append('audience', item);
-            }});
-            
-            // Send notification request
-            fetch('/notify', {{
-                method: 'POST',
-                body: formData
-            }})
-            .then(response => response.json())
-            .then(data => {{
-                if (data.status === 'ok') {{
-                    showResult(`Notification sent successfully to ${{data.routed_count || '?'}} services!`, true);
-                }} else if (data.status === 'duplicate') {{
-                    showResult('Duplicate notification: ' + data.message, false);
-                }} else {{
-                    showResult('Error: ' + (data.message || 'Unknown error'), false);
-                }}
-            }})
-            .catch(error => {{
-                console.error('Failed to send notification:', error);
-                showResult('Failed to send notification: ' + error.message, false);
-            }});
-        }}
-        
-        // Show result message
-        function showResult(message, success) {{
-            const resultDiv = document.getElementById('test-result');
-            resultDiv.textContent = message;
-            resultDiv.className = success ? 'success-message' : 'error-message';
-            resultDiv.style.display = 'block';
-            
-            setTimeout(() => {{
-                resultDiv.style.display = 'none';
-            }}, 5000);
-        }}
-        
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {{
-            // Check status on load
-            checkStatus();
-            
-            // Set up send button
-            const sendButton = document.getElementById('send-test');
-            if (sendButton) {{
-                sendButton.addEventListener('click', sendTestNotification);
-            }}
-            
-            // Poll status every 30 seconds
-            setInterval(checkStatus, 30000);
-            
-            console.log('Simple notification dashboard loaded successfully');
-        }});
-    </script>
-</body>
-</html>
-    """
-    
-    # Return direct HTML response
-    return html
+    return render_template('index.html', config=config)
 
-@app.route("/tag-manager")
-def tag_manager():
-    """Tag manager page"""
-    # Gather debug information about the request for logging
-    request_info = {
-        "url": str(request.url),
-        "base_url": str(request.base_url),
-        "url_root": str(request.url_root),
-        "path": request.path,
-        "script_root": request.script_root,
-        "headers": {key: value for key, value in request.headers.items()},
-        "remote_addr": request.remote_addr,
-        "host": request.host,
-    }
-    
-    logger.info(f"Tag manager page requested with request info: {request_info}")
-    
-    # Log environment variables for debugging
-    proxy_headers = {k: v for k, v in request.environ.items() if k.startswith('HTTP_X_')}
-    if proxy_headers:
-        logger.info(f"Proxy headers detected: {proxy_headers}")
-        logger.info(f"SCRIPT_NAME: {request.environ.get('SCRIPT_NAME', '')}")
-        logger.info(f"PATH_INFO: {request.environ.get('PATH_INFO', '')}")
-    
-    try:
-        logger.info("Attempting to render tag_manager.html template")
-        return render_template("tag_manager.html")
-    except Exception as e:
-        logger.error(f"Error rendering tag manager template: {e}")
-        try:
-            # Try the simple template as fallback
-            logger.info("Attempting to render simple tag manager template as fallback")
-            return render_template("tag_manager_simple.html")
-        except Exception as e2:
-            logger.error(f"Error rendering simple tag manager template: {e2}")
-            return f"Error rendering tag manager: {e}", 500
-            
-@app.route("/simple-tag-manager")
-def simple_tag_manager():
-    """Simple tag manager page for testing"""
-    logger.info("Simple tag manager page requested")
-    try:
-        return render_template("tag_manager_simple.html")
-    except Exception as e:
-        logger.error(f"Error rendering simple tag manager template: {e}")
-        return f"Error: {e}", 500
-
-@app.route("/routes")
-def list_routes():
-    """Show all available routes for debugging"""
-    routes = []
-    for rule in app.url_map.iter_rules():
-        routes.append({
-            "endpoint": rule.endpoint,
-            "methods": [m for m in rule.methods if m != "OPTIONS" and m != "HEAD"],
-            "path": str(rule)
-        })
-    
-    # Check if template directory exists
-    template_dir = app.template_folder
-    templates = []
-    if os.path.exists(template_dir):
-        templates = os.listdir(template_dir)
-    
-    return jsonify({
-        "routes": routes,
-        "template_folder": template_dir,
-        "templates": templates,
-        "static_folder": app.static_folder,
-        "blueprints": list(app.blueprints.keys()),
-        "version": "2.0.0-alpha.28"
-    })
-
-@app.route("/debug")
-def debug_info():
-    """Display debug information"""
-    import sys
-    import flask
-    import glob
-    
-    # Gather debug information
-    debug_data = {
-        "Python Version": sys.version,
-        "Flask Version": flask.__version__,
-        "App Name": app.name,
-        "App Import Name": app.import_name,
-        "URL Map": str(app.url_map),
-        "Blueprints": list(app.blueprints.keys()),
-        "Static Folder": app.static_folder,
-        "Template Folder": app.template_folder,
-        "Static URL Path": app.static_url_path,
-        "Available Templates": os.listdir(app.template_folder) if os.path.exists(app.template_folder) else [],
-        "Available Static Files": glob.glob(f"{app.static_folder}/**/*", recursive=True) if os.path.exists(app.static_folder) else [],
-        "Environment": dict(os.environ),
-        "Sys Path": sys.path,
-        "Current Directory": os.getcwd(),
-        "Config": load_config(),
-    }
-    
-    # Check for tag_routing module
-    try:
-        import tag_routing
-        debug_data["Tag Routing Available"] = True
-        debug_data["Tag Routing Version"] = getattr(tag_routing, "__version__", "Unknown")
-        debug_data["Tag Routing Path"] = tag_routing.__file__
-    except ImportError as e:
-        debug_data["Tag Routing Available"] = False
-        debug_data["Tag Routing Error"] = str(e)
-    
-    return jsonify(debug_data)
-
-@app.route("/request-debug")
-def request_debug():
-    """Display detailed information about the current request"""
-    request_data = {
-        "URL": str(request.url),
-        "Base URL": str(request.base_url),
-        "URL Root": str(request.url_root),
-        "Path": request.path,
-        "Full Path": request.full_path,
-        "Script Root": request.script_root,
-        "Headers": dict(request.headers),
-        "Method": request.method,
-        "Query String": request.query_string.decode('utf-8'),
-        "Environment": {k: str(v) for k, v in request.environ.items()},
-        "Remote Address": request.remote_addr,
-        "Host": request.host,
-    }
-    
-    return jsonify(request_data)
-    
-@app.route("/emergency")
-@app.route("/emergency/")
-def emergency_ui():
-    """Emergency UI with minimal dependencies - available through ingress"""
-    emergency_html = """<!DOCTYPE html>
+# Emergency UI for testing when main UI has issues
+@app.route('/emergency')
+def emergency():
+    return """
     <html>
     <head>
         <title>Smart Notification Router - Emergency UI</title>
         <style>
-            body { font-family: sans-serif; padding: 20px; }
-            .container { max-width: 800px; margin: 0 auto; }
-            .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-            h1 { color: #03a9f4; }
-            button { background: #03a9f4; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-            .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; }
-            .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; }
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+            h1 { color: #333; }
+            .form-group { margin-bottom: 15px; }
+            label { display: block; margin-bottom: 5px; }
+            input, select, textarea { width: 100%; padding: 8px; box-sizing: border-box; }
+            button { background: #4CAF50; color: white; padding: 10px 15px; border: none; cursor: pointer; }
+            .result { margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px; }
         </style>
     </head>
     <body>
-        <div class="container">
-            <h1>Smart Notification Router v2.0.0-alpha.25</h1>
-            <div class="card">
-                <h2>Emergency Test Notification</h2>
-                <p>Send a basic test notification using this emergency interface:</p>
-                <form id="emergency-form">
-                    <div>
-                        <label>Title:</label>
-                        <input type="text" id="title" value="Emergency Test" style="width: 100%; margin-bottom: 10px; padding: 5px;">
-                    </div>
-                    <div>
-                        <label>Message:</label>
-                        <input type="text" id="message" value="This is an emergency test message" style="width: 100%; margin-bottom: 10px; padding: 5px;">
-                    </div>
-                    <div>
-                        <label>Target:</label>
-                        <input type="text" id="audience" value="mobile,dashboard" style="width: 100%; margin-bottom: 10px; padding: 5px;">
-                    </div>
-                    <button type="button" onclick="sendTest()">Send Test Notification</button>
-                </form>
-                <div id="result" style="margin-top: 15px;"></div>
+        <h1>Smart Notification Router - Emergency Test Interface</h1>
+        <div class="form-group">
+            <label for="title">Title:</label>
+            <input type="text" id="title" value="Test Notification">
+        </div>
+        <div class="form-group">
+            <label for="message">Message:</label>
+            <textarea id="message" rows="3">This is a test message from the Smart Notification Router.</textarea>
+        </div>
+        <div class="form-group">
+            <label for="severity">Severity:</label>
+            <select id="severity">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+                <option value="emergency">Emergency</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Audience:</label>
+            <div>
+                <input type="checkbox" id="mobile" value="mobile"> 
+                <label for="mobile">Mobile</label>
             </div>
-            
-            <div class="card">
-                <h2>Debug Links</h2>
-                <ul id="debug-links">
-                    <!-- Links will be populated by JavaScript -->
-                </ul>
-                
-                <script>
-                    // Get the base URL for proper linking with ingress
-                    const baseUrl = window.location.pathname.includes('/emergency') 
-                        ? window.location.pathname.split('/emergency')[0] 
-                        : '';
-                        
-                    // Create links with proper base URL
-                    const links = [
-                        { text: 'View Debug Information', path: '/debug' },
-                        { text: 'View Request Information', path: '/request-debug' },
-                        { text: 'View Available Routes', path: '/routes' },
-                        { text: 'Check System Status', path: '/status' },
-                        { text: 'Return to Main Dashboard', path: '/' }
-                    ];
-                    
-                    const linksList = document.getElementById('debug-links');
-                    links.forEach(link => {
-                        const li = document.createElement('li');
-                        const a = document.createElement('a');
-                        a.href = baseUrl + link.path;
-                        a.textContent = link.text;
-                        li.appendChild(a);
-                        linksList.appendChild(li);
-                    });
-                </script>
+            <div>
+                <input type="checkbox" id="dashboard" value="dashboard" checked> 
+                <label for="dashboard">Dashboard</label>
             </div>
         </div>
+        <button onclick="sendNotification()">Send Notification</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
         
         <script>
-            function sendTest() {
+            function sendNotification() {
+                // Get form values
                 const title = document.getElementById('title').value;
                 const message = document.getElementById('message').value;
-                const audience = document.getElementById('audience').value.split(',');
+                const severity = document.getElementById('severity').value;
                 
-                const formData = new FormData();
-                formData.append('title', title);
-                formData.append('message', message);
-                formData.append('severity', 'high');
-                
-                audience.forEach(item => {
-                    formData.append('audience', item.trim());
+                // Get selected audiences
+                const audiences = [];
+                document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                    audiences.push(checkbox.value);
                 });
                 
-                // Get the base URL
-                const baseUrl = window.location.pathname.includes('/emergency') 
-                    ? window.location.pathname.split('/emergency')[0] 
-                    : '';
+                // Create payload
+                const payload = {
+                    title: title,
+                    message: message,
+                    severity: severity,
+                    audience: audiences
+                };
                 
-                fetch(baseUrl + '/notify', {
+                // Send request
+                fetch('/notify', {
                     method: 'POST',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
                 })
                 .then(response => response.json())
                 .then(data => {
+                    // Display result
                     const resultDiv = document.getElementById('result');
-                    if (data.status === 'ok') {
-                        resultDiv.className = 'success';
-                        resultDiv.textContent = `Success! Notification sent to ${data.routed_count} services.`;
-                    } else {
-                        resultDiv.className = 'error';
-                        resultDiv.textContent = `Error: ${data.message}`;
-                    }
+                    resultDiv.innerHTML = '<h3>Result:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                    resultDiv.style.display = 'block';
                 })
                 .catch(error => {
+                    // Display error
                     const resultDiv = document.getElementById('result');
-                    resultDiv.className = 'error';
-                    resultDiv.textContent = `Error: ${error.message}`;
+                    resultDiv.innerHTML = '<h3>Error:</h3><pre>' + error + '</pre>';
+                    resultDiv.style.display = 'block';
                 });
             }
         </script>
     </body>
     </html>
     """
-    return emergency_html
 
-@app.route("/config", methods=["POST"])
-def update_config():
-    """Update configuration via web UI"""
-    global config
-    
-    form_data = request.form
-    
-    # Update audiences
-    new_audiences = {}
-    audience_names = form_data.getlist("audience_name")
-    audience_services = form_data.getlist("audience_services")
-    audience_severity = form_data.getlist("audience_severity")
-    
-    for i in range(len(audience_names)):
-        name = audience_names[i]
-        if name:
-            services = audience_services[i].split(",")
-            services = [s.strip() for s in services]
-            severity = audience_severity[i]
-            
-            new_audiences[name] = {
-                "services": services,
-                "min_severity": severity
-            }
-    
-    # Update severity levels
-    severity_levels = form_data.get("severity_levels", "").split(",")
-    severity_levels = [s.strip() for s in severity_levels]
-    
-    # Update config
-    config["audiences"] = new_audiences
-    config["severity_levels"] = severity_levels
-    
-    # Save config
-    save_config()
-    
-    return redirect(url_for("index"))
-
-@app.route("/notify", methods=["POST"])
+# API endpoint for notifications
+@app.route('/notify', methods=['POST'])
 def notify():
-    """API endpoint to receive notifications"""
     try:
-        # Log request information for debugging
-        logger.debug(f"Content-Type: {request.headers.get('Content-Type')}")
-        logger.debug(f"Form data present: {bool(request.form)}")
-        logger.debug(f"JSON available: {request.is_json}")
+        # Get request data (support both JSON and form data)
+        if request.content_type and 'application/json' in request.content_type:
+            data = request.json
+        else:
+            # Handle form data
+            data = {
+                'title': request.form.get('title', ''),
+                'message': request.form.get('message', ''),
+                'severity': request.form.get('severity', 'medium'),
+                'audience': request.form.getlist('audience')
+            }
         
-        # Initialize payload as empty dict
-        payload = {}
+        if not data:
+            return jsonify({'success': False, 'error': 'Invalid payload'}), 400
         
-        # Handle different request formats
-        content_type = request.headers.get('Content-Type', '')
+        # Validate required fields
+        if not all(k in data for k in ['title', 'message', 'audience']):
+            return jsonify({'success': False, 'error': 'Missing required fields'}), 400
         
-        # Case 1: FormData submission (from web UI)
-        if request.form:
-            logger.debug("Processing form data submission")
-            # Get form data
-            title = request.form.get('title')
-            message = request.form.get('message')
-            severity = request.form.get('severity')
-            # Handle audience as list from form
-            audience = request.form.getlist('audience')
-            
-            payload = {
+        # Check for duplicate message
+        if is_duplicate(data):
+            return jsonify({'success': True, 'status': 'duplicate', 'info': 'Duplicate message, not sent'}), 200
+        
+        # Process notification
+        title = data.get('title')
+        message = data.get('message')
+        severity = data.get('severity', 'medium')
+        audiences = data.get('audience', [])
+        
+        logger.info(f"Notification received: {title} ({severity}) -> {audiences}")
+        
+        # In a real implementation, this would route to notification services
+        # For now, we just log the notification and add to history
+        
+        # Add to notification history
+        notification_history.append({
+            'title': title,
+            'message': message,
+            'severity': severity,
+            'audiences': audiences,
+            'timestamp': datetime.datetime.now().isoformat(),
+            'routed_to': []  # Would contain actual services in real implementation
+        })
+        
+        # Keep history to last 20 items
+        if len(notification_history) > 20:
+            notification_history.pop(0)
+        
+        return jsonify({
+            'success': True, 
+            'status': 'ok',
+            'message': 'Notification processed',
+            'routed_count': 0,  # In real implementation, this would be the count of services notified
+            'details': {
                 'title': title,
                 'message': message,
                 'severity': severity,
-                'audience': audience
+                'audiences': audiences
             }
-        
-        # Case 2: JSON API request
-        elif 'application/json' in content_type or request.is_json:
-            logger.debug("Processing JSON submission")
-            try:
-                payload = request.get_json(force=True)
-            except Exception as json_err:
-                logger.error(f"JSON parsing error: {json_err}")
-                return jsonify({"status": "error", "message": f"JSON parsing error: {json_err}"}), 400
-        
-        # Case 3: Other formats - try to handle as best we can
-        else:
-            logger.debug("Attempting to process unknown format")
-            # Try to extract fields from any available source
-            if request.data:
-                # Try direct JSON parsing
-                try:
-                    import json
-                    payload = json.loads(request.data.decode('utf-8'))
-                except Exception as e:
-                    logger.error(f"Failed to parse request data: {e}")
-                    # Try to build payload from request.values
-                    payload = {
-                        'title': request.values.get('title'),
-                        'message': request.values.get('message'),
-                        'severity': request.values.get('severity'),
-                        'audience': request.values.getlist('audience')
-                    }
-            else:
-                return jsonify({"status": "error", "message": "No data provided in request"}), 400
-                
-        # Log and validate payload
-        logger.debug(f"Parsed payload: {payload}")
-        
-        # Ensure we have required data
-        if not payload:
-            return jsonify({"status": "error", "message": "Failed to parse request data"}), 400
-            
-        # Check required fields
-        required_fields = ["title", "message", "severity"]
-        for field in required_fields:
-            if field not in payload:
-                return jsonify({"status": "error", "message": f"Missing required field: {field}"}), 400
-        
-        # Get current config
-        current_config = load_config()
-        message_id = get_hash(payload)
-
-        # Check for duplicates
-        now = time.time()
-        last_sent = SENT_MESSAGES.get(message_id, 0)
-        if now - last_sent < DEDUPLICATION_TTL:
-            return jsonify({"status": "duplicate", "message": "Message already sent recently"}), 200
-
-        title = payload.get("title")
-        message = payload.get("message")
-        severity = payload.get("severity")
-        
-        # Check audience format and convert to list if needed
-        audience = payload.get("audience", [])
-        if isinstance(audience, str):
-            try:
-                # Try to convert from JSON string if it came that way
-                import json
-                parsed_audience = json.loads(audience)
-                if isinstance(parsed_audience, list):
-                    audience = parsed_audience
-                else:
-                    # If it's a single string name, treat it as a single-item list
-                    audience = [audience]
-            except:
-                # If it's not valid JSON, treat it as a single string name
-                audience = [audience]
-        elif not isinstance(audience, list):
-            # If it's some other type, convert to string and use as single item
-            audience = [str(audience)]
-            
-        logger.info(f"Notification received - Title: {title}, Severity: {severity}, Audience: {audience}")
-
-        # Update sent messages
-        SENT_MESSAGES[message_id] = now
-
-        # Prune old messages
-        for msg_id in list(SENT_MESSAGES.keys()):
-            if now - SENT_MESSAGES[msg_id] > DEDUPLICATION_TTL:
-                del SENT_MESSAGES[msg_id]
-
-        # Route notifications
-        routed_count = 0
-        for target in audience:
-            if target in current_config["audiences"]:
-                target_config = current_config["audiences"].get(target, {})
-                min_severity = target_config.get("min_severity", "low")
-                
-                try:
-                    if current_config["severity_levels"].index(severity) >= current_config["severity_levels"].index(min_severity):
-                        for service in target_config.get("services", []):
-                            logger.info(f"[{target.upper()}] {service} -> {title}: {message}")
-                            # Here would be the actual notification sending logic
-                            # This would integrate with Home Assistant API
-                            routed_count += 1
-                except ValueError:
-                    logger.error(f"Invalid severity level: {severity}")
-            else:
-                logger.warning(f"Unknown audience: {target}")
-
-        return jsonify({
-            "status": "ok", 
-            "message": f"Notification routed to {routed_count} services",
-            "routed_count": routed_count
-        }), 200
-        
+        })
+    
     except Exception as e:
         logger.error(f"Error processing notification: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route("/services")
-def get_services():
-    """API endpoint to get available notification services from Home Assistant"""
-    # In a real implementation, this would query the Home Assistant API
-    try:
-        # For now, we'll return a predefined list
-        # This would ideally fetch from Home Assistant API
-        services = {
-            "notify": [
-                # Mobile/companion apps
-                "notify.mobile_app_pixel_9_pro_xl",
-                "notify.mobile_app_iphone",
-                "notify.mobile_app_samsung_watch",
-                
-                # Other notification services
-                "notify.telegram",
-                "notify.email",
-                "notify.pushbullet",
-                "notify.smtp"
-            ],
-            "persistent": [
-                "persistent_notification.create"
-            ],
-            "media_player": [
-                # TTS/announce (future feature)
-                "media_player.living_room_speaker",
-                "media_player.kitchen_speaker"
-            ]
-        }
-        
-        # Add description of service types (for UI)
-        service_descriptions = {
-            "notify": "Push notifications to mobile devices, watches, and messaging platforms",
-            "persistent": "Display notifications in the Home Assistant UI",
-            "media_player": "Announce notifications through speakers (future feature)"
-        }
-        
-        return jsonify({
-            "services": services,
-            "descriptions": service_descriptions
-        })
-    except Exception as e:
-        logger.error(f"Error getting services: {e}")
-        return jsonify({
-            "services": {
-                "notify": ["notify.mobile_app"],
-                "persistent": ["persistent_notification.create"]
-            },
-            "descriptions": {
-                "notify": "Push notifications",
-                "persistent": "Home Assistant UI notifications"
-            }
-        })
-
-@app.route("/status")
+# Status endpoint to check if service is running
+@app.route('/status')
 def status():
-    """API endpoint to get service status"""
+    clean_message_cache()  # Clean expired messages when checking status
+    
     return jsonify({
-        "status": "running",
-        "deduplication_ttl": DEDUPLICATION_TTL,
-        "message_count": len(SENT_MESSAGES),
-        "config_loaded": bool(config != DEFAULT_CONFIG)
+        'status': 'running',
+        'message_count': len(message_cache),
+        'deduplication_ttl': deduplication_ttl,
+        'notification_count': len(notification_history),
+        'timestamp': datetime.datetime.now().isoformat()
     })
 
-@app.route("/user")
-def get_user():
-    """API endpoint to get current user information"""
-    try:
-        # In a real implementation, this would get the user from Home Assistant
-        # For now, just return our default user
-        return jsonify({
-            "user": CURRENT_USER,
-            "status": "ok"
-        })
-    except Exception as e:
-        logger.error(f"Error getting user information: {e}")
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+# User endpoint for UI (simulated user data)
+@app.route('/user')
+def user():
+    return jsonify({
+        'status': 'ok',
+        'user': {
+            'id': 'default',
+            'name': 'Home Assistant User',
+            'is_admin': True,  # Let user be admin for testing UI
+            'audiences': list(config['audiences'].keys()),
+            'preferences': {
+                'min_severity': 'low',
+                'notifications_enabled': True
+            }
+        }
+    })
 
-def cleanup_thread():
-    """Background thread to clean up old messages"""
-    while True:
-        try:
-            now = time.time()
-            for msg_id in list(SENT_MESSAGES.keys()):
-                if now - SENT_MESSAGES[msg_id] > DEDUPLICATION_TTL:
-                    del SENT_MESSAGES[msg_id]
-        except Exception as e:
-            logger.error(f"Error in cleanup thread: {e}")
-        time.sleep(60)
-
-def initialize_app():
-    """Initialize the application with all required components."""
-    # Load options and config
-    options = load_options()
-    config_data = load_config()
+# Configuration endpoint (GET for retrieving, POST for updating)
+@app.route('/config', methods=['GET', 'POST'])
+def configuration():
+    global config
     
-    # Create app configuration for tag-based routing
-    app_config = {
-        "homeassistant_url": options.get("homeassistant_url", "http://supervisor/core/api"),
-        "homeassistant_token": options.get("homeassistant_token", ""),
-        "config_dir": "/config",
-        "deduplication_ttl": options.get("deduplication_ttl", 300),
-        "audiences": config_data.get("audiences", {}),
-        "severity_levels": config_data.get("severity_levels", ["low", "medium", "high", "emergency"]),
+    if request.method == 'GET':
+        return jsonify({
+            'status': 'ok',
+            'config': config
+        })
+    
+    elif request.method == 'POST':
+        try:
+            # In a real implementation, this would update the YAML file
+            # For now, just update the in-memory config
+            
+            # Get form data
+            severity_levels = request.form.get('severity_levels', '').split(',')
+            severity_levels = [s.strip() for s in severity_levels if s.strip()]
+            
+            if severity_levels:
+                config['severity_levels'] = severity_levels
+            
+            # Get audience data (this is a simplified version)
+            audience_names = request.form.getlist('audience_name')
+            audience_severities = request.form.getlist('audience_severity')
+            audience_services = request.form.getlist('audience_services')
+            
+            if audience_names:
+                # Create new audiences config
+                new_audiences = {}
+                
+                for i in range(len(audience_names)):
+                    name = audience_names[i]
+                    if not name:
+                        continue
+                    
+                    # Get severity (use default if not provided)
+                    severity = audience_severities[i] if i < len(audience_severities) else 'low'
+                    
+                    # Get services (use empty list if not provided)
+                    services_str = audience_services[i] if i < len(audience_services) else ''
+                    services = [s.strip() for s in services_str.split(',') if s.strip()]
+                    
+                    new_audiences[name] = {
+                        'min_severity': severity,
+                        'services': services,
+                        'description': f'{name} notifications'
+                    }
+                
+                if new_audiences:
+                    config['audiences'] = new_audiences
+            
+            return jsonify({
+                'status': 'ok',
+                'message': 'Configuration updated successfully'
+            })
+            
+        except Exception as e:
+            logger.error(f"Error updating configuration: {e}")
+            return jsonify({
+                'status': 'error',
+                'message': f'Error updating configuration: {str(e)}'
+            }), 500
+
+# Notification history endpoint
+@app.route('/notifications')
+def get_notifications():
+    return jsonify({
+        'status': 'ok',
+        'notifications': notification_history
+    })
+
+# Debug routes endpoint
+@app.route('/routes')
+def get_routes():
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append({
+            'endpoint': rule.endpoint,
+            'methods': list(rule.methods),
+            'route': str(rule)
+        })
+    
+    return jsonify({
+        'status': 'ok',
+        'routes': routes
+    })
+
+# Debug endpoint
+@app.route('/debug')
+def debug():
+    debug_info = {
+        'app_info': {
+            'static_folder': app.static_folder,
+            'template_folder': app.template_folder,
+            'static_url_path': app.static_url_path
+        },
+        'config': config,
+        'cache_info': {
+            'message_cache_count': len(message_cache),
+            'deduplication_ttl': deduplication_ttl
+        },
+        'notification_history': len(notification_history),
+        'environment': dict(os.environ),
+        'routes': [str(rule) for rule in app.url_map.iter_rules()]
     }
     
-    # Check if tag_routing module is available
-    tag_routing_available = False
-    try:
-        # Check if the module exists by importing it
-        import tag_routing
-        tag_routing_available = True
-        logger.info("Tag routing module found")
-    except ImportError as e:
-        logger.warning(f"Tag routing module not found: {e}")
-        logger.warning("Tag-based routing will be disabled")
-        return
+    return jsonify(debug_info)
+
+# Request debug endpoint (used by simple tag manager)
+@app.route('/request-debug')
+def request_debug():
+    debug_info = {
+        'method': request.method,
+        'url': request.url,
+        'headers': dict(request.headers),
+        'args': dict(request.args),
+        'form': dict(request.form) if request.form else None,
+        'json': request.json if request.is_json else None,
+        'cookies': dict(request.cookies),
+        'remote_addr': request.remote_addr
+    }
     
-    # Initialize tag-based routing
-    logger.info("Initializing tag-based routing system")
+    return jsonify(debug_info)
+
+# Static files (served from web/static)
+@app.route('/static/<path:path>')
+def send_static(path):
+    return send_from_directory(app.static_folder, path)
+
+# Serve tag manager page
+@app.route('/tag-manager')
+def tag_manager():
+    return render_template('tag_manager.html')
+
+# Simple tag manager (v1)
+@app.route('/simple-tag-manager')
+def simple_tag_manager():
+    return render_template('tag_manager_simple.html')
+
+def main():
+    """Main function to run the Smart Notification Router."""
+    logger.info("Smart Notification Router started")
+    
     try:
-        components = initialize_tag_routing(app_config)
-        logger.info("Tag-based routing system initialized successfully")
-        
-        # Register tag-based routing endpoints
-        register_tag_routing_endpoints(app)
-        logger.info("Tag-based routing endpoints registered successfully")
+        # Start Flask server
+        app.run(host='0.0.0.0', port=8080, debug=False)
+    except KeyboardInterrupt:
+        logger.info("Service stopped by user")
     except Exception as e:
-        logger.error(f"Error setting up tag-based routing: {e}")
+        logger.error(f"Error in main loop: {e}")
+        raise
 
 if __name__ == "__main__":
-    # Load configuration at startup
-    load_options()
-    load_config()
-    
-    # Start cleanup thread
-    threading.Thread(target=cleanup_thread, daemon=True).start()
-    
-    # Initialize app with all components
-    initialize_app()
-    
-    # Start the application
-    logger.info("Starting Flask application on 0.0.0.0:8080")
-    # Use Debug mode for better error reporting during development
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    main()

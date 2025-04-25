@@ -5,34 +5,112 @@ Welcome to the documentation for the Smart Notification Router add-on for Home A
 ## Table of Contents
 
 - [User Documentation](#user-documentation)
+- [Developer API](#developer-api)
 - [Development Documentation](#development-documentation)
-- [Roadmap](#roadmap)
+- [Feature Status](#feature-status)
 
 ## User Documentation
 
 - [Installation Guide](../MANUAL_INSTALL.md) - How to install the add-on
 - [Configuration Guide](../README.md) - How to configure the add-on
-- [Troubleshooting](../README.md) - Common issues and solutions
+- [Upgrade Guide](../UPGRADE_V2.md) - How to upgrade to v2.0
+- [Troubleshooting](../REINSTALL_GUIDE.md) - Common issues and solutions
+
+## Developer API
+
+The Smart Notification Router provides a RESTful API for sending notifications:
+
+```http
+POST /notify
+Content-Type: application/json
+
+{
+  "title": "Test Notification",
+  "message": "This is a test message",
+  "severity": "high",
+  "audience": ["mobile", "dashboard"]
+}
+```
+
+See [API Reference](#api-reference) below for complete documentation.
 
 ## Development Documentation
 
 - [Project Structure](../CLAUDE.md) - Overview of the codebase structure
-- [Release History](../smart_notification_router/CHANGELOG.md) - Full version history and changes
+- [Release History](../CLAUDE.md) - Full version history and changes
+- [Tag-Based Routing Design](./tag_based_routing_design.md) - Technical design for tag-based routing
+- [Tag-Based Routing Implementation](./tag_based_routing_implementation.md) - Implementation details
 
-## Roadmap
+## Feature Status
 
-### Current Development: Tag-Based Routing
+### Implemented Features (v2.0.0-alpha.32)
 
-We're currently working on a major enhancement to the Smart Notification Router that will leverage Home Assistant's tag system to create a more dynamic, context-aware notification system.
+1. ✅ **Web Dashboard**: Full UI for notification management
+2. ✅ **Audience Configuration**: Define and manage notification audiences
+3. ✅ **Deduplication System**: Prevent duplicate notifications
+4. ✅ **Notification History**: Track sent notifications
+5. ✅ **REST API**: Complete RESTful API for sending and managing notifications
+6. ✅ **Tag Management UI**: Basic interface for managing tag-based routing
 
-- [Tag-Based Routing Design Document](./tag_based_routing_design.md) - Technical design for the new feature
-- [Tag-Based Routing Implementation Plan](./tag_based_routing_implementation.md) - Detailed implementation roadmap
+### In Progress Features
 
-### Key Features in Development
+1. 🔄 **Tag-Based Routing**: Dynamic routing based on entity tags
+2. 🔄 **Context-Aware Routing**: Route based on presence and status
+3. 🔄 **Tag Expression Parser**: Parser for tag expressions
 
-1. **Tag-Based Audience Resolution**: Define audiences using tag expressions instead of static lists
-2. **Context-Aware Routing**: Route notifications based on user presence and device status
-3. **Dynamic Service Selection**: Automatically choose the best notification method based on context
-4. **Enhanced Tag Management UI**: UI for creating and managing tag-based routing rules
+## API Reference
 
-Development is scheduled to begin in May 2025. If you'd like to contribute or provide feedback on the design, please open an issue on the GitHub repository.
+### `POST /notify`
+
+Send a notification.
+
+**Request:**
+```json
+{
+  "title": "Notification Title",
+  "message": "Notification Message",
+  "severity": "medium",
+  "audience": ["mobile", "dashboard"]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "status": "ok",
+  "message": "Notification processed",
+  "details": {
+    "title": "Notification Title",
+    "message": "Notification Message", 
+    "severity": "medium",
+    "audiences": ["mobile", "dashboard"]
+  }
+}
+```
+
+### `GET /config`
+
+Get current configuration.
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "config": {
+    "audiences": {
+      "mobile": {
+        "services": ["notify.mobile_app_default"],
+        "min_severity": "high"
+      },
+      "dashboard": {
+        "services": ["persistent_notification.create"],
+        "min_severity": "low"
+      }
+    },
+    "severity_levels": ["low", "medium", "high", "emergency"]
+  }
+}
+```
+
+For more API endpoints, see the [CLAUDE.md](../CLAUDE.md) documentation.

@@ -1,5 +1,33 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.32 (2025-04-25)
+- Implemented comprehensive Flask server with full UI rendering
+- Added complete API endpoints for notification management
+- Implemented robust notification history tracking
+- Added support for audience configuration via web interface
+- Fixed simple tag manager to properly handle debugging requests
+- Enhanced deduplication system with real-time tracking
+- Added emergency UI as fallback when main interface has issues
+- Implemented form and JSON handling for various data formats
+- Integrated existing UI templates with backend functionality
+
+## v2.0.0-alpha.31 (2025-04-23)
+- Fixed version number to resolve add-on store visibility issues
+- Updated configuration to ensure compatibility with Home Assistant add-on store
+- Improved schema validation handling
+- Ensured consistent configuration across all files
+
+## v2.0.0-alpha.30 (2025-04-23)
+- Added note about completely uninstalling and reinstalling add-on if schema errors persist
+- Fixed leftover schema validation issues with audiences configuration
+- Added documentation about clean installation requirements
+
+## v2.0.0-alpha.29 (2025-04-23)
+- Fixed Flask startup error by properly handling the debug parameter in run.sh
+- Modified monkey patching to filter out debug parameter from run_simple() arguments
+- Fixed "TypeError: run_simple() got an unexpected keyword argument 'debug'" error
+- Improved Flask server resilience to invalid parameters
+
 ## v2.0.0-alpha.28 (2025-04-23)
 - Fixed ingress connection issues by explicitly binding Flask to 0.0.0.0
 - Added port mapping for direct access via port 8080
