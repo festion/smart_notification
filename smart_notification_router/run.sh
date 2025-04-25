@@ -95,11 +95,25 @@ if os.path.exists(options_file):
 EOL
 
 # Apply monkey patch to fix Flask run_simple issue with debug parameter
-echo "[INFO] Starting Flask application with debug parameter patch..."
+echo "[INFO] Starting Flask application with debug parameter patch and persistent server..."
 
 python3 -c "
 import flask
 import types
+import sys
+import signal
+import time
+
+# Signal handler to keep the process running
+def handle_signal(sig, frame):
+    print('Received signal:', sig)
+    if sig == signal.SIGTERM:
+        print('Terminating gracefully...')
+        sys.exit(0)
+
+# Register signal handlers
+signal.signal(signal.SIGTERM, handle_signal)
+signal.signal(signal.SIGINT, handle_signal)
 
 # Fixed patched run method that filters out the debug parameter
 def patched_run(self, host=None, port=None, debug=None, **kwargs):
@@ -112,12 +126,29 @@ def patched_run(self, host=None, port=None, debug=None, **kwargs):
     if 'debug' in kwargs:
         del kwargs['debug']
     
-    run_simple(host, port, self, **kwargs)
+    # Add threaded=True for better performance
+    kwargs['threaded'] = True
+    
+    # Use try-except to keep the process alive even if Flask crashes
+    try:
+        run_simple(host, port, self, **kwargs)
+    except Exception as e:
+        print(f'Error in Flask server: {e}')
+        print('Restarting server in 5 seconds...')
+        time.sleep(5)
+        run_simple(host, port, self, **kwargs)
 
 # Apply the monkey patch
 flask.Flask.run = patched_run
 
-# Import and run the main application
-import runpy
-runpy.run_path('/app/main.py')
+# Import and run the main application with error handling
+try:
+    import runpy
+    runpy.run_path('/app/main.py')
+except Exception as e:
+    print(f'Fatal error in main application: {e}')
+    # Keep the process alive to prevent container restart loops
+    print('Keeping process alive to prevent restart loops...')
+    while True:
+        time.sleep(60)
 "

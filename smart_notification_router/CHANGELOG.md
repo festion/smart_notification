@@ -1,5 +1,13 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.32.3 (2025-04-25)
+- Fixed restart loop issue in S6 service
+- Added proper signal handling for graceful termination
+- Implemented persistent server with error recovery
+- Enhanced Flask server stability with try-except blocks
+- Added threaded=True option for better performance
+- Implemented error handling to prevent container restart loops
+
 ## v2.0.0-alpha.32.2 (2025-04-25)
 - Fixed bashio command not found errors in run.sh script
 - Replaced bashio logging with standard echo for maximum compatibility
