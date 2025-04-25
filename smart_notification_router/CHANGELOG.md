@@ -1,5 +1,12 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.32.1 (2025-04-25)
+- Fixed critical Flask startup error: "TypeError: run_simple() got an unexpected keyword argument 'debug'"
+- Restored the monkey patch solution from v2.0.0-alpha.29 that was accidentally removed
+- Pinned Flask and Werkzeug versions to ensure compatibility
+- Enhanced startup script with better error handling and logging
+- Improved configuration generation from options
+
 ## v2.0.0-alpha.32 (2025-04-25)
 - Implemented comprehensive Flask server with full UI rendering
 - Added complete API endpoints for notification management

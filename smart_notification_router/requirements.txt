@@ -1,7 +1,5 @@
-paho-mqtt
-pyyaml
-flask
-requests
-jinja2
-python-dotenv
-setuptools
+requests>=2.25.1
+paho-mqtt>=1.5.1
+flask==2.3.3
+werkzeug==2.3.7
+pyyaml>=6.0
