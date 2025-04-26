@@ -1,0 +1,4 @@
+{
+  "notification_service": "notify.mobile_app",
+  "check_interval": 60
+}

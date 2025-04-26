@@ -1,0 +1,2 @@
+FROM alpine
+COPY smart_notification_router/icon.png /icon.png

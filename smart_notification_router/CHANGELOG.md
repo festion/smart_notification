@@ -1,5 +1,11 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.33 (2025-04-26)
+- Simplified run.sh to run Flask in the foreground for easier debugging
+- Added robust error logging to main.py for fatal errors and tracebacks
+- Ensured container stays alive only if Flask is running
+- Improved startup reliability and developer troubleshooting
+
 ## v2.0.0-alpha.32.3 (2025-04-25)
 - Fixed restart loop issue in S6 service
 - Added proper signal handling for graceful termination

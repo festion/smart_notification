@@ -49,5 +49,5 @@ except Exception as e:
 EOL
 
 echo "Starting Smart Notification Router..."
-cd /app
+cd "$(dirname "$0")"
 exec python3 main.py

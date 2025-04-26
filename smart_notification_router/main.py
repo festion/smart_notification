@@ -87,6 +87,7 @@ def clean_message_cache():
 # Main web UI
 @app.route('/')
 def index():
+    logger.info("Index route accessed")
     return render_template('index.html', config=config)
 
 # Emergency UI for testing when main UI has issues
@@ -431,10 +432,9 @@ def simple_tag_manager():
 def main():
     """Main function to run the Smart Notification Router."""
     logger.info("Smart Notification Router started")
-    
     try:
-        # Start Flask server
-        app.run(host='0.0.0.0', port=8080, debug=False)
+        # Start Flask server with debug enabled for troubleshooting
+        app.run(host='0.0.0.0', port=8080, debug=True)
     except KeyboardInterrupt:
         logger.info("Service stopped by user")
     except Exception as e:
@@ -442,4 +442,9 @@ def main():
         raise
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"Fatal error in main(): {e}", exc_info=True)
+        import sys
+        sys.exit(1)
