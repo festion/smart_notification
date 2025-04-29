@@ -18,7 +18,7 @@ RUN chmod -R 755 /etc/cont-finish.d || true
 # Ensure python3 and pip3 are installed if not present (for Home Assistant base compatibility)
 RUN if ! command -v python3 >/dev/null 2>&1; then \
     apk add --no-cache python3 py3-pip; \
-fi
+    fi
 
 # Copy application files
 WORKDIR /app
@@ -71,11 +71,14 @@ RUN if [ -f "/etc/services.d/smart-notification/run" ]; then \
     echo "Setting permissions for service script"; \
     chmod 755 /etc/services.d/smart-notification/run; \
     ls -la /etc/services.d/smart-notification/run; \
-fi
+    fi
 
 # Set working directory and create config directory
 WORKDIR /app
 RUN mkdir -p /config && chmod 777 /config
+
+# Create directories for icons
+RUN mkdir -p /usr/share/icons /usr/share/hassio/icons
 
 # For debugging
 RUN echo "Flask app is in $(pwd)" && \
@@ -83,10 +86,16 @@ RUN echo "Flask app is in $(pwd)" && \
     ls -la /app/web && \
     ls -la /app/web/static && \
     ls -la /app/web/templates
-    
+
 # Copy icon files to multiple locations for maximum compatibility
 COPY icon.png /icon.png
 COPY icon.png /logo.png
+COPY icon.png /usr/share/icons/icon.png
+COPY icon.png /usr/share/hassio/icons/icon.png
+COPY icon.png /.icon.png
+
+# Make sure the icons are readable
+RUN chmod 644 /icon.png /logo.png /usr/share/icons/icon.png /usr/share/hassio/icons/icon.png /.icon.png
 RUN ls -la /*.png
 
 CMD ["/app/run.sh"]
