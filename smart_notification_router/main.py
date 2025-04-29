@@ -62,9 +62,11 @@ deduplication_ttl = 300  # default: 5 minutes (300 seconds)
 notification_history = []  # Store recent notifications
 
 # Load add-on options
+
+
 def load_options():
     options_path = '/data/options.json'
-    
+
     if os.path.exists(options_path):
         try:
             with open(options_path, 'r') as f:
@@ -73,7 +75,7 @@ def load_options():
                 return options
         except Exception as e:
             logger.error(f"Error loading options: {e}")
-    
+
     test_options_path = '/workspaces/smart_notification/test_data/options.json'
     if os.path.exists(test_options_path):
         try:
@@ -83,11 +85,13 @@ def load_options():
                 return options
         except Exception as e:
             logger.error(f"Error loading test options: {e}")
-    
+
     logger.warning("Options file not found, using default options")
     return {}
 
 # Load configuration from YAML file
+
+
 def load_config():
     config_path = os.path.join(os.path.dirname(
         __file__), 'notification_config.yaml')
@@ -113,8 +117,9 @@ if options:
     # Override deduplication_ttl if provided in options
     if 'deduplication_ttl' in options:
         deduplication_ttl = options['deduplication_ttl']
-        logger.info(f"Setting deduplication TTL from options: {deduplication_ttl}")
-    
+        logger.info(
+            f"Setting deduplication TTL from options: {deduplication_ttl}")
+
     # Set port from options if provided
     if 'port' in options:
         config['port'] = options['port']
@@ -714,11 +719,11 @@ def main():
     """Main function to run the Smart Notification Router."""
     # Get port from config or use default
     port = config.get('port', 8181)
-    
+
     logger.info(f"Smart Notification Router starting on port {port}")
     try:
-        # Start Flask server with debug enabled for troubleshooting
-        app.run(host='0.0.0.0', port=port, debug=True)
+        # Disable auto-reloader in debug mode to prevent duplicate processes
+        app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
     except KeyboardInterrupt:
         logger.info("Service stopped by user")
     except Exception as e:
