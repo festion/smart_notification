@@ -8,7 +8,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG BUILD_ARCH=amd64
 
 # Copy root filesystem
-COPY smart_notification_router/rootfs/ /
+COPY rootfs/ /
 
 # Immediately set execute permissions on critical scripts after copy
 RUN chmod -R 755 /etc/services.d
@@ -22,14 +22,14 @@ fi
 
 # Copy application files
 WORKDIR /app
-COPY smart_notification_router/main.py /app/
-COPY smart_notification_router/notification_config.yaml /app/
-COPY smart_notification_router/requirements.txt /app/
-COPY smart_notification_router/web /app/web/
-COPY smart_notification_router/run.sh /app/
+COPY main.py /app/
+COPY notification_config.yaml /app/
+COPY requirements.txt /app/
+COPY web /app/web/
+COPY run.sh /app/
 # Debug: List /app contents after copying run.sh
 RUN echo "Debug: Listing /app after copying run.sh" && ls -l /app
-COPY smart_notification_router/tag_routing /app/tag_routing/
+COPY tag_routing /app/tag_routing/
 
 # Install Python dependencies
 RUN pip3 install --no-cache-dir -r /app/requirements.txt
@@ -85,8 +85,8 @@ RUN echo "Flask app is in $(pwd)" && \
     ls -la /app/web/templates
     
 # Copy icon files to multiple locations for maximum compatibility
-COPY smart_notification_router/icon.png /icon.png
-COPY smart_notification_router/icon.png /logo.png
+COPY icon.png /icon.png
+COPY icon.png /logo.png
 RUN ls -la /*.png
 
 CMD ["/app/run.sh"]
