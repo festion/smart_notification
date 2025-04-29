@@ -1,179 +1,142 @@
 """
-Entity Tag Manager
-
-This module provides functionality for managing Home Assistant entity tags
-for the Smart Notification Router v2 tag-based routing system.
+Entity Manager for Smart Notification Router.
+This module manages entity tags and provides access to Home Assistant entities.
 """
 
 import logging
-import yaml
-import os
-import json
+from typing import Dict, List, Any, Optional
 from .ha_client import HomeAssistantAPIClient
 
 logger = logging.getLogger(__name__)
 
-class EntityTagManager:
-    """Manager for Home Assistant entity tags."""
-    
-    def __init__(self, ha_client, config_dir="/config"):
-        """Initialize the entity tag manager.
+class EntityManager:
+    """Manages entities and their tags."""
+
+    def __init__(self, demo_mode: bool = True):
+        """Initialize the entity manager.
         
         Args:
-            ha_client (HomeAssistantAPIClient): Home Assistant API client
-            config_dir (str): Home Assistant configuration directory
+            demo_mode: Whether to use demo data instead of actual API calls
         """
-        self.ha_client = ha_client
-        self.config_dir = config_dir
-        self.customize_file = os.path.join(config_dir, "customize.yaml")
-        self.entity_tags = {}
-        self.entities = []
-        
-        # Load entity tags from Home Assistant
-        self._load_entity_tags()
+        self.ha_client = HomeAssistantAPIClient(demo_mode=demo_mode)
     
-    def _load_entity_tags(self):
-        """Load entity tags from Home Assistant."""
-        try:
-            # Get all entities with tags
-            entities_with_tags = self.ha_client.get_entities_with_tags()
-            self.entity_tags = entities_with_tags
-            
-            # Get all entities
-            states = self.ha_client.get_entity_states()
-            self.entities = states if states else []
-            
-            logger.info(f"Loaded {len(self.entity_tags)} entities with tags")
-            logger.info(f"Loaded {len(self.entities)} total entities")
-        except Exception as e:
-            logger.error(f"Error loading entity tags: {e}")
+    def get_all_entities(self) -> List[Dict[str, Any]]:
+        """Get all entities from Home Assistant."""
+        return self.ha_client.get_entities()
     
-    def get_entities(self):
-        """Get all entities from Home Assistant.
-        
-        Returns:
-            list: List of entities
-        """
-        return self.entities
+    def get_entity(self, entity_id: str) -> Optional[Dict[str, Any]]:
+        """Get a single entity by ID."""
+        return self.ha_client.get_entity(entity_id)
     
-    def get_entity_tags(self):
+    def get_entity_tags(self) -> Dict[str, List[str]]:
         """Get all entity tags.
         
         Returns:
-            dict: Dictionary mapping entity IDs to lists of tags
+            Dictionary mapping entity IDs to lists of tags
         """
-        return self.entity_tags
+        return self.ha_client.get_entity_tags()
     
-    def set_entity_tags(self, entity_id, tags):
-        """Set tags for an entity.
+    def get_tags_for_entity(self, entity_id: str) -> List[str]:
+        """Get tags for a specific entity.
         
         Args:
-            entity_id (str): Entity ID
-            tags (list): List of tags
+            entity_id: The ID of the entity
             
         Returns:
-            bool: True if successful, False otherwise
+            List of tags for the entity
         """
-        try:
-            # Update local cache
-            self.entity_tags[entity_id] = tags
-            
-            return True
-        except Exception as e:
-            logger.error(f"Error setting tags for entity {entity_id}: {e}")
-            return False
+        all_tags = self.ha_client.get_entity_tags()
+        return all_tags.get(entity_id, [])
     
-    def sync_tags_to_ha(self):
-        """Sync entity tags to Home Assistant.
-        
-        This generates a customize.yaml file for Home Assistant to load
-        entity customizations including tags.
-        
-        Returns:
-            bool: True if successful, False otherwise
-        """
-        try:
-            customize_data = {}
-            
-            # Create customization data for each entity with tags
-            for entity_id, tags in self.entity_tags.items():
-                if tags:
-                    customize_data[entity_id] = {"tags": tags}
-            
-            # Backup existing customize file if it exists
-            if os.path.exists(self.customize_file):
-                backup_file = self.customize_file + ".backup"
-                try:
-                    with open(self.customize_file, "r") as f:
-                        existing_data = yaml.safe_load(f) or {}
-                    
-                    with open(backup_file, "w") as f:
-                        yaml.dump(existing_data, f, default_flow_style=False)
-                    
-                    logger.info(f"Backed up existing customize file to {backup_file}")
-                except Exception as e:
-                    logger.error(f"Error backing up customize file: {e}")
-            
-            # Create customize directory if needed
-            os.makedirs(os.path.dirname(self.customize_file), exist_ok=True)
-            
-            # Write new customize file
-            with open(self.customize_file, "w") as f:
-                yaml.dump(customize_data, f, default_flow_style=False)
-            
-            logger.info(f"Wrote customize file with {len(customize_data)} entities")
-            
-            # Reload Home Assistant customization
-            if self._reload_ha_customization():
-                logger.info("Reloaded Home Assistant customization")
-                return True
-            else:
-                logger.error("Failed to reload Home Assistant customization")
-                return False
-        
-        except Exception as e:
-            logger.error(f"Error syncing tags to Home Assistant: {e}")
-            return False
+    def set_entity_tags(self, entity_id: str, tags: List[str]) -> None:
+        """Set tags for an entity."""
+        self.ha_client.set_entity_tags(entity_id, tags)
     
-    def _reload_ha_customization(self):
-        """Reload Home Assistant customization.
-        
-        Returns:
-            bool: True if successful, False otherwise
-        """
-        try:
-            # Call homeassistant.reload_core_config service
-            result = self.ha_client.call_service("homeassistant", "reload_core_config")
-            return result
-        except Exception as e:
-            logger.error(f"Error reloading Home Assistant customization: {e}")
-            return False
+    def add_tag_to_entity(self, entity_id: str, tag: str) -> None:
+        """Add a tag to an entity if it doesn't already exist."""
+        current_tags = self.get_tags_for_entity(entity_id)
+        if tag not in current_tags:
+            current_tags.append(tag)
+            self.set_entity_tags(entity_id, current_tags)
     
-    def load_tags_from_file(self):
-        """Load entity tags from customize.yaml file.
+    def remove_tag_from_entity(self, entity_id: str, tag: str) -> None:
+        """Remove a tag from an entity if it exists."""
+        current_tags = self.get_tags_for_entity(entity_id)
+        if tag in current_tags:
+            current_tags.remove(tag)
+            self.set_entity_tags(entity_id, current_tags)
+    
+    def batch_update_tags(self, entity_ids: List[str], tags: List[str], 
+                           operation: str = 'add') -> Dict[str, List[str]]:
+        """Update tags for multiple entities in batch.
         
+        Args:
+            entity_ids: List of entity IDs to update
+            tags: List of tags to apply
+            operation: The operation to perform ('add', 'remove', or 'replace')
+            
         Returns:
-            bool: True if successful, False otherwise
+            Dictionary mapping entity IDs to their updated tags
         """
-        try:
-            if os.path.exists(self.customize_file):
-                with open(self.customize_file, "r") as f:
-                    customize_data = yaml.safe_load(f) or {}
-                
-                # Extract tags from customize data
-                entity_tags = {}
-                for entity_id, data in customize_data.items():
-                    if isinstance(data, dict) and "tags" in data:
-                        entity_tags[entity_id] = data["tags"]
-                
-                # Update local cache
-                self.entity_tags.update(entity_tags)
-                
-                logger.info(f"Loaded {len(entity_tags)} entities with tags from file")
-                return True
-            else:
-                logger.warning(f"Customize file not found: {self.customize_file}")
-                return False
-        except Exception as e:
-            logger.error(f"Error loading tags from file: {e}")
-            return False
+        results = {}
+        
+        for entity_id in entity_ids:
+            current_tags = self.get_tags_for_entity(entity_id)
+            
+            if operation == 'add':
+                # Add tags without duplicates
+                new_tags = current_tags.copy()
+                for tag in tags:
+                    if tag not in new_tags:
+                        new_tags.append(tag)
+            elif operation == 'remove':
+                # Remove specified tags
+                new_tags = [tag for tag in current_tags if tag not in tags]
+            else:  # replace
+                # Replace all tags
+                new_tags = tags.copy()
+            
+            # Update tags for this entity
+            self.set_entity_tags(entity_id, new_tags)
+            
+            # Add to results
+            results[entity_id] = new_tags
+        
+        return results
+    
+    def find_entities_by_tag(self, tag: str) -> List[str]:
+        """Find entities that have a specific tag.
+        
+        Args:
+            tag: The tag to search for
+            
+        Returns:
+            List of entity IDs that have the tag
+        """
+        results = []
+        entity_tags = self.get_entity_tags()
+        
+        for entity_id, tags in entity_tags.items():
+            if tag in tags:
+                results.append(entity_id)
+        
+        return results
+    
+    def get_entities(self) -> List[Dict[str, Any]]:
+        """Alias for get_all_entities() for compatibility."""
+        return self.get_all_entities()
+    
+class EntityTagManager:
+    """Legacy class for backwards compatibility."""
+    
+    def __init__(self, demo_mode: bool = True):
+        """Initialize with an EntityManager."""
+        self.entity_manager = EntityManager(demo_mode=demo_mode)
+    
+    def get_entity_tags(self) -> Dict[str, List[str]]:
+        """Get all entity tags."""
+        return self.entity_manager.ha_client.get_entity_tags()
+    
+    def set_entity_tags(self, entity_id: str, tags: List[str]) -> None:
+        """Set tags for an entity."""
+        self.entity_manager.set_entity_tags(entity_id, tags)

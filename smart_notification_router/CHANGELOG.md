@@ -1,5 +1,13 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.34 (2025-04-29)
+- Fixed tabbed navigation functionality in the web interface
+- Enhanced handleNavigation() function to properly show/hide dashboard sections
+- Improved sidebar navigation with proper active state highlighting
+- Added detailed console logging for navigation actions
+- Fixed issue where tabs weren't switching when clicking on sidebar links
+- Updated header title to reflect the current active section
+
 ## v2.0.0-alpha.33 (2025-04-26)
 - Simplified run.sh to run Flask in the foreground for easier debugging
 - Added robust error logging to main.py for fatal errors and tracebacks

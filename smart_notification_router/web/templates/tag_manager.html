@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tag Manager - Smart Notification Router</title>
+    <title>Smart Notification Router - Tag Manager</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', _external=True) }}">
-    <script src="{{ url_for('static', filename='js/tag_manager.js', _external=True) }}" defer></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/tag_manager.js') }}" defer></script>
     <style>
         /* Custom styles for tag manager */
         .tag-manager-container {
@@ -273,192 +273,738 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Tag Expression Tester */
+        .tag-tester {
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #eee;
+        }
+
+        .tag-tester-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .tag-tester h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .expression-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .expression-input input {
+            flex-grow: 1;
+            font-family: monospace;
+        }
+
+        .expression-help {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .expression-examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .expression-example {
+            font-size: 13px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            background-color: rgba(3, 169, 244, 0.05);
+            border: 1px dashed #03a9f4;
+            cursor: pointer;
+        }
+
+        .expression-example:hover {
+            background-color: rgba(3, 169, 244, 0.1);
+        }
+
+        .test-results {
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 6px;
+        }
+
+        .result-header {
+            padding: 10px 15px;
+            background-color: rgba(3, 169, 244, 0.1);
+            border-bottom: 1px solid #eee;
+            font-weight: 500;
+        }
+
+        .result-entity {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .result-entity:last-child {
+            border-bottom: none;
+        }
+
+        .result-entity:hover {
+            background-color: #f5f5f5;
+        }
+
+        .entity-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .entity-name {
+            font-weight: 500;
+        }
+
+        .entity-id {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .entity-tags {
+            font-size: 12px;
+            color: #03a9f4;
+        }
+
+        .expression-result {
+            font-weight: 700;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+
+        .match-true {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+        }
+
+        .match-false {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+        }
+
+        .expression-visualizer {
+            margin-top: 15px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 15px;
+            background-color: #fff;
+        }
+
+        .expression-tree {
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .no-results {
+            padding: 15px;
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+
+        .error-message {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom-color: var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Batch Tag Management */
+        .batch-actions {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .batch-selection-info {
+            background-color: rgba(3, 169, 244, 0.1);
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .batch-selection-controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .batch-tag-form {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .batch-entity-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+
+        .batch-entity-list .entity-item {
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .batch-entity-list .entity-item:last-child {
+            border-bottom: none;
+        }
+
+        .entity-select {
+            margin-right: 10px;
+        }
+
+        .batch-submit {
+            margin-top: 15px;
+        }
+
+        .batch-result {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: rgba(3, 169, 244, 0.05);
+            border-radius: 6px;
+            border: 1px solid rgba(3, 169, 244, 0.1);
+        }
+
+        .batch-tag-operation {
+            margin-bottom: 15px;
+        }
+
+        .operation-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .operation-option {
+            padding: 8px 15px;
+            background-color: #f5f5f5;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .operation-option.active {
+            background-color: rgba(3, 169, 244, 0.1);
+            border: 1px solid rgba(3, 169, 244, 0.2);
+        }
+
+        .select-all-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+
+        .select-all-checkbox {
+            margin-right: 8px;
+        }
+
+        /* Tag Manager specific styles */
+        .advanced-filter-container {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .filter-header h4 {
+            margin: 0;
+        }
+        
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #tag-filter-input {
+            width: 300px;
+            padding: 8px 12px;
+        }
+        
+        .tag-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .tag-cloud-item {
+            background-color: #e0e0e0;
+            border-radius: 16px;
+            padding: 4px 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .tag-cloud-item:hover {
+            background-color: #d0d0d0;
+        }
+        
+        .operator-container {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        .operator-button {
+            padding: 4px 8px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .filtered-out {
+            display: none !important;
+        }
+        
+        .entity-select {
+            margin-right: 8px;
+        }
+        
+        .batch-actions {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .batch-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .batch-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        
+        .batch-filter {
+            padding: 6px 12px;
+            background-color: #e0e0e0;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        
+        .batch-filter.active {
+            background-color: #4285f4;
+            color: white;
+        }
+        
+        .batch-operations {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-logo">
-                <i class="mdi mdi-bell-ring-outline"></i>
-                <span>Smart Notification Router</span>
+    <div class="app-container">
+        <div class="app-header">
+            <div class="logo">
+                <img src="/logo.png" alt="Smart Notification Router" class="header-logo">
+                <h1>Smart Notification Router</h1>
             </div>
-            
-            <ul class="sidebar-nav">
-                <!-- Main Navigation -->
-                <li><a href="/"><i class="mdi mdi-view-dashboard"></i> Dashboard</a></li>
-                <li><a href="/#notification-history"><i class="mdi mdi-history"></i> Notification History</a></li>
-                <li><a href="/#preferences"><i class="mdi mdi-account-cog"></i> User Preferences</a></li>
-                
-                <!-- Admin Functions -->
-                <li><a href="/#audiences"><i class="mdi mdi-account-group"></i> Audience Config</a></li>
-                
-                <!-- Tag Management -->
-                <li><a href="/tag-manager" class="active"><i class="mdi mdi-tag-multiple"></i> Tag Manager</a></li>
-                
-                <!-- Help & Support -->
-                <li><a href="/#help"><i class="mdi mdi-help-circle"></i> Help</a></li>
-                
-                <!-- Debug Tools (hidden in production) -->
-                <li class="debug-link" style="display: none;"><a href="/routes"><i class="mdi mdi-routes"></i> Debug Routes</a></li>
-                <li class="debug-link" style="display: none;"><a href="/debug"><i class="mdi mdi-bug"></i> Debug Info</a></li>
-                <li class="debug-link" style="display: none;"><a href="/simple-tag-manager"><i class="mdi mdi-tag-outline"></i> Simple Tag Manager</a></li>
-            </ul>
-            
-            <div class="user-info" id="sidebar-user-info">
-                <div class="user-avatar">
-                    <i class="mdi mdi-account"></i>
-                </div>
-                <div class="user-details">
-                    <div class="user-name" id="sidebar-user-name">Default User</div>
-                    <div class="user-role" id="sidebar-user-role">User</div>
-                </div>
+            <div class="header-right">
+                <button id="help-button" class="btn btn-ghost" title="Help">
+                    <i class="mdi mdi-help-circle"></i>
+                </button>
+                <a href="/" class="btn btn-ghost" title="Home">
+                    <i class="mdi mdi-home"></i>
+                </a>
+                <a href="/tag-manager" class="btn btn-primary" title="Tag Manager">
+                    <i class="mdi mdi-tag-multiple"></i> Tag Manager
+                </a>
             </div>
-        </aside>
-        
-        <!-- Header -->
-        <header class="header">
-            <h1 class="header-title">Tag Manager</h1>
-            
-            <div class="header-actions">
-                <button class="header-btn" id="refresh-entities" title="Refresh Entities"><i class="mdi mdi-refresh"></i></button>
-                <button class="header-btn" id="help-button" title="Help"><i class="mdi mdi-help-circle-outline"></i></button>
+        </div>
+
+        <div class="tab-nav">
+            <div class="tab active" data-tab="entity-manager">
+                <i class="mdi mdi-tag"></i> Entity Tag Manager
             </div>
-        </header>
-        
-        <!-- Main Content -->
-        <main class="main-content">
-            <section class="dashboard-section">
-                <div class="section-header">
-                    <h2 class="section-title">Entity Tag Manager</h2>
-                    <button class="btn btn-primary" id="sync-tags-button">
-                        <i class="mdi mdi-sync"></i> Sync with Home Assistant
-                    </button>
-                </div>
-                
-                <div class="card">
-                    <div class="card-content">
-                        <p>Manage entity tags for Smart Notification v2 tag-based routing. Add tags to entities in Home Assistant without editing YAML files.</p>
-                        
-                        <div class="filter-menu">
-                            <div class="filter-item active" data-filter="all">All Entities</div>
-                            <div class="filter-item" data-filter="person">Persons</div>
-                            <div class="filter-item" data-filter="device_tracker">Devices</div>
-                            <div class="filter-item" data-filter="media_player">Media Players</div>
-                            <div class="filter-item" data-filter="binary_sensor">Binary Sensors</div>
-                            <div class="filter-item" data-filter="light">Lights</div>
-                            <div class="filter-item" data-filter="switch">Switches</div>
-                            <div class="filter-item" data-filter="tagged">Tagged Entities</div>
-                        </div>
-                        
-                        <div class="search-bar">
-                            <input type="text" id="entity-search" placeholder="Search entities...">
-                        </div>
-                        
-                        <div class="sync-status" id="sync-status"></div>
-                        
-                        <div class="tag-manager-container">
-                            <!-- Entity List -->
-                            <div class="entity-list" id="entity-list">
-                                <div class="loading-overlay" id="loading-overlay">
-                                    <div class="spinner"></div>
-                                </div>
-                                
-                                <!-- Entities will be loaded here -->
-                                <div class="entity-category" data-category="person">
-                                    <div class="entity-category-title">
-                                        <span><i class="mdi mdi-account"></i> Persons</span>
-                                        <span class="entity-count">0</span>
-                                    </div>
-                                    <div class="entity-category-items"></div>
-                                </div>
-                                
-                                <div class="entity-category" data-category="device_tracker">
-                                    <div class="entity-category-title">
-                                        <span><i class="mdi mdi-cellphone"></i> Devices</span>
-                                        <span class="entity-count">0</span>
-                                    </div>
-                                    <div class="entity-category-items"></div>
-                                </div>
-                                
-                                <div class="entity-category" data-category="media_player">
-                                    <div class="entity-category-title">
-                                        <span><i class="mdi mdi-speaker"></i> Media Players</span>
-                                        <span class="entity-count">0</span>
-                                    </div>
-                                    <div class="entity-category-items"></div>
-                                </div>
-                                
-                                <div class="entity-category" data-category="other">
-                                    <div class="entity-category-title">
-                                        <span><i class="mdi mdi-shape"></i> Other Entities</span>
-                                        <span class="entity-count">0</span>
-                                    </div>
-                                    <div class="entity-category-items"></div>
+            <div class="tab" data-tab="batch-manager">
+                <i class="mdi mdi-tag-multiple"></i> Batch Tag Manager
+            </div>
+            <div class="tab" data-tab="expression-tester">
+                <i class="mdi mdi-code-brackets"></i> Expression Tester
+            </div>
+        </div>
+
+        <div class="content-container">
+            <!-- Entity Tag Manager Tab -->
+            <div id="entity-manager-tab" class="tab-content active">
+                <div class="content-columns">
+                    <div class="left-column">
+                        <div class="panel entity-list-panel">
+                            <div class="panel-header">
+                                <h2>Home Assistant Entities</h2>
+                                <div class="panel-actions">
+                                    <button id="refresh-entities" class="btn btn-sm btn-ghost" title="Refresh Entities">
+                                        <i class="mdi mdi-refresh"></i>
+                                    </button>
                                 </div>
                             </div>
-                            
-                            <!-- Entity Details -->
-                            <div class="entity-details" id="entity-details">
-                                <div class="no-entity-selected" id="no-entity-selected">
-                                    <p>Select an entity from the list to manage its tags.</p>
+                            <div class="panel-content">
+                                <div class="search-container">
+                                    <input type="text" id="entity-search" placeholder="Search entities..." class="input-search">
+                                    <i class="mdi mdi-magnify search-icon"></i>
                                 </div>
                                 
-                                <div class="entity-edit" id="entity-edit" style="display: none;">
-                                    <h3 id="entity-title">Entity Name</h3>
-                                    <p id="entity-id">entity.id</p>
-                                    
-                                    <div class="entity-state">
-                                        <strong>State:</strong> <span id="entity-state">unknown</span>
+                                <div class="search-container tag-filter-container" style="margin-top: 10px;">
+                                    <input type="text" id="tag-filter-input" placeholder="Filter by tag (e.g. user:john)..." class="input-search">
+                                    <i class="mdi mdi-tag-search search-icon"></i>
+                                </div>
+                                
+                                <div id="tag-filter-indicator" class="active-filter" style="display: none; margin: 10px 0; padding: 6px 12px; background-color: rgba(3, 169, 244, 0.1); border-radius: 4px; font-size: 14px;">
+                                    <span>Tag filter: <span class="filter-text"></span></span>
+                                    <button id="clear-tag-filter" class="btn btn-sm btn-ghost" style="margin-left: 8px;">
+                                        <i class="mdi mdi-close-circle"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="filter-menu">
+                                    <div class="filter-item active" data-filter="all">All</div>
+                                    <div class="filter-item" data-filter="tagged">Tagged</div>
+                                    <div class="filter-item" data-filter="person">Person</div>
+                                    <div class="filter-item" data-filter="device_tracker">Device</div>
+                                    <div class="filter-item" data-filter="media_player">Media</div>
+                                    <div class="filter-item" data-filter="other">Other</div>
+                                </div>
+
+                                <!-- Tag Filter Component -->
+                                <div class="filter-section">
+                                    <div class="filter-header">
+                                        <h4>Advanced Tag Filter</h4>
+                                        <button id="clear-filter-btn" class="secondary-button" title="Clear filter">
+                                            <i class="mdi mdi-close"></i> Clear
+                                        </button>
+                                    </div>
+                                    <div class="filter-body">
+                                        <div class="input-group">
+                                            <input type="text" id="tag-filter-input" placeholder="Enter tag expression (e.g. user:john+area:home)">
+                                            <button id="filter-help-btn" class="icon-button" title="Filter help">
+                                                <i class="mdi mdi-help-circle-outline"></i>
+                                            </button>
+                                        </div>
+                                        <div id="filter-stats" class="filter-stats"></div>
+                                        <div class="tag-suggestions filter-suggestions">
+                                            <span class="suggestion-label">Common filters:</span>
+                                            <span class="tag-suggestion" data-tag="user:">user:</span>
+                                            <span class="tag-suggestion" data-tag="area:">area:</span>
+                                            <span class="tag-suggestion" data-tag="device:">device:</span>
+                                            <span class="tag-suggestion" data-tag="priority:">priority:</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="entity-categories">
+                                    <div class="entity-category" data-category="person">
+                                        <h3>
+                                            <i class="mdi mdi-account"></i> 
+                                            People 
+                                            <span class="entity-count">0</span>
+                                        </h3>
+                                        <div class="entity-category-items"></div>
+                                    </div>
+
+                                    <div class="entity-category" data-category="device_tracker">
+                                        <h3>
+                                            <i class="mdi mdi-cellphone"></i> 
+                                            Devices
+                                            <span class="entity-count">0</span>
+                                        </h3>
+                                        <div class="entity-category-items"></div>
                                     </div>
                                     
-                                    <div class="tag-management">
-                                        <h4>Entity Tags</h4>
-                                        <div class="tag-list" id="entity-tags">
-                                            <!-- Tags will be displayed here -->
+                                    <div class="entity-category" data-category="media_player">
+                                        <h3>
+                                            <i class="mdi mdi-speaker"></i> 
+                                            Media Players
+                                            <span class="entity-count">0</span>
+                                        </h3>
+                                        <div class="entity-category-items"></div>
+                                    </div>
+
+                                    <div class="entity-category" data-category="other">
+                                        <h3>
+                                            <i class="mdi mdi-apps"></i> 
+                                            Other Entities
+                                            <span class="entity-count">0</span>
+                                        </h3>
+                                        <div class="entity-category-items"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="right-column">
+                        <div class="panel entity-edit-panel">
+                            <div class="panel-header">
+                                <h2>Entity Tags</h2>
+                                <div class="panel-actions">
+                                    <button id="sync-tags-button" class="btn btn-sm" title="Sync Tags">
+                                        <i class="mdi mdi-sync"></i> Sync
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="panel-content">
+                                <div id="no-entity-selected" class="empty-state">
+                                    <i class="mdi mdi-gesture-tap"></i>
+                                    <p>Select an entity from the list to manage its tags</p>
+                                </div>
+
+                                <div id="entity-edit" class="entity-edit">
+                                    <div class="entity-header">
+                                        <h3 id="entity-title">Entity Name</h3>
+                                        <div class="entity-meta">
+                                            <div class="entity-id" id="entity-id">entity.id</div>
+                                            <div class="entity-state" id="entity-state">state</div>
                                         </div>
-                                        
+                                    </div>
+
+                                    <div class="sync-status" id="sync-status"></div>
+
+                                    <div class="entity-section">
+                                        <h4>Tags</h4>
+                                        <div id="entity-tags" class="tag-list"></div>
+
                                         <div class="tag-input-container">
-                                            <input type="text" id="tag-input" placeholder="Add a tag (e.g., user:john)">
-                                            <button class="btn btn-primary" id="add-tag-button">
+                                            <input type="text" id="tag-input" placeholder="Add new tag..." class="tag-input">
+                                            <button id="add-tag-button" class="btn btn-sm">
                                                 <i class="mdi mdi-plus"></i> Add
                                             </button>
                                         </div>
-                                        
-                                        <div class="tag-templates">
-                                            <div class="tag-category">Tag Templates</div>
-                                            <div class="tag-suggestions">
-                                                <div class="tag-suggestion" data-tag="user:">user:name</div>
-                                                <div class="tag-suggestion" data-tag="device:">device:type</div>
-                                                <div class="tag-suggestion" data-tag="area:">area:location</div>
-                                                <div class="tag-suggestion" data-tag="priority:">priority:level</div>
-                                                <div class="tag-suggestion" data-tag="time:">time:period</div>
-                                            </div>
+
+                                        <div class="tag-suggestions">
+                                            <span class="tag-suggestion" data-tag="user:john">user:john</span>
+                                            <span class="tag-suggestion" data-tag="device:mobile">device:mobile</span>
+                                            <span class="tag-suggestion" data-tag="area:living_room">area:living_room</span>
+                                            <span class="tag-suggestion" data-tag="priority:high">priority:high</span>
                                         </div>
-                                        
-                                        <div class="tag-preview">
-                                            <h4>YAML Preview</h4>
-                                            <code id="yaml-preview">homeassistant:
-  customize:
-    entity.id:
-      tags:
-        - tag1
-        - tag2</code>
-                                        </div>
-                                        
-                                        <div class="card-actions">
-                                            <button class="btn btn-success" id="save-tags-button">
-                                                <i class="mdi mdi-content-save"></i> Save Tags
-                                            </button>
-                                        </div>
+                                    </div>
+
+                                    <div class="entity-section yaml-section">
+                                        <h4>YAML Preview</h4>
+                                        <pre id="yaml-preview" class="yaml-preview"></pre>
+                                    </div>
+
+                                    <div class="entity-actions">
+                                        <button id="save-tags-button" class="btn btn-primary">
+                                            <i class="mdi mdi-content-save"></i> Save Tags
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </section>
-        </main>
+            </div>
+
+            <!-- Batch Tag Manager Tab -->
+            <div id="batch-manager-tab" class="tab-content">
+                <div class="panel batch-manager-panel">
+                    <div class="panel-header">
+                        <h2>Batch Tag Manager</h2>
+                        <div class="panel-actions">
+                            <span id="batch-selection-count" class="selection-count">0 entities selected</span>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="batch-controls">
+                            <div class="batch-selection-controls">
+                                <button id="select-all-btn" class="btn btn-sm">Select All</button>
+                                <button id="select-none-btn" class="btn btn-sm">Clear Selection</button>
+                            </div>
+
+                            <div class="search-container">
+                                <input type="text" id="batch-entity-search" placeholder="Search entities..." class="input-search">
+                                <i class="mdi mdi-magnify search-icon"></i>
+                            </div>
+
+                            <div class="filter-menu">
+                                <div class="filter-item active" data-batch-filter="all">All</div>
+                                <div class="filter-item" data-batch-filter="tagged">Tagged</div>
+                                <div class="filter-item" data-batch-filter="person">Person</div>
+                                <div class="filter-item" data-batch-filter="device_tracker">Device</div>
+                                <div class="filter-item" data-batch-filter="media_player">Media</div>
+                            </div>
+                        </div>
+
+                        <div class="batch-entity-list" id="batch-entity-list">
+                            <div class="select-all-container">
+                                <label>
+                                    <input type="checkbox" id="select-all-checkbox"> Select all visible
+                                </label>
+                            </div>
+                            <!-- Entity items will be added here by JavaScript -->
+                        </div>
+
+                        <div class="batch-operations">
+                            <div class="operation-selector">
+                                <h4>Operation</h4>
+                                <div class="operation-options">
+                                    <div class="operation-option active" data-operation="add">
+                                        <i class="mdi mdi-plus-circle"></i> Add Tags
+                                    </div>
+                                    <div class="operation-option" data-operation="remove">
+                                        <i class="mdi mdi-minus-circle"></i> Remove Tags
+                                    </div>
+                                    <div class="operation-option" data-operation="replace">
+                                        <i class="mdi mdi-swap-horizontal"></i> Replace All Tags
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="batch-tag-input-container">
+                                <h4>Tags</h4>
+                                <textarea id="batch-tag-input" placeholder="Enter tags separated by commas..." class="batch-tag-input"></textarea>
+                                
+                                <div class="tag-suggestions">
+                                    <h5>Common Tags:</h5>
+                                    <span class="tag-suggestion" data-tag="user:john">user:john</span>
+                                    <span class="tag-suggestion" data-tag="user:jane">user:jane</span>
+                                    <span class="tag-suggestion" data-tag="device:mobile">device:mobile</span>
+                                    <span class="tag-suggestion" data-tag="device:speaker">device:speaker</span>
+                                    <span class="tag-suggestion" data-tag="device:display">device:display</span>
+                                    <span class="tag-suggestion" data-tag="area:living_room">area:living_room</span>
+                                    <span class="tag-suggestion" data-tag="area:bedroom">area:bedroom</span>
+                                    <span class="tag-suggestion" data-tag="area:kitchen">area:kitchen</span>
+                                    <span class="tag-suggestion" data-tag="priority:high">priority:high</span>
+                                    <span class="tag-suggestion" data-tag="priority:normal">priority:normal</span>
+                                    <span class="tag-suggestion" data-tag="priority:low">priority:low</span>
+                                </div>
+                            </div>
+                            
+                            <div class="batch-apply">
+                                <button id="batch-apply-btn" class="btn btn-primary">
+                                    <i class="mdi mdi-check"></i> Apply Changes
+                                </button>
+                                <div id="batch-result" class="batch-result" style="display:none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expression Tester Tab -->
+            <div id="expression-tester-tab" class="tab-content">
+                <div class="panel expression-tester-panel">
+                    <div class="panel-header">
+                        <h2>Tag Expression Tester</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div class="expression-container">
+                            <div class="expression-input-container">
+                                <h3>Enter Tag Expression</h3>
+                                <input type="text" id="expression-input" placeholder="Enter a tag expression (e.g. user:john+device:mobile)" class="expression-input">
+                                <div id="expression-error" class="expression-error" style="display: none;"></div>
+                                
+                                <div class="expression-examples">
+                                    <h4>Examples:</h4>
+                                    <div class="expression-example" data-expression="user:john">user:john</div>
+                                    <div class="expression-example" data-expression="user:john+device:mobile">user:john+device:mobile</div>
+                                    <div class="expression-example" data-expression="area:living_room|area:kitchen">area:living_room|area:kitchen</div>
+                                    <div class="expression-example" data-expression="user:john-device:speaker">user:john-device:speaker</div>
+                                </div>
+                                
+                                <button id="test-expression-button" class="btn btn-primary">
+                                    <i class="mdi mdi-code-tags-check"></i> Test Expression
+                                </button>
+                            </div>
+                            
+                            <div id="expression-visualizer" class="expression-visualizer" style="display: none;">
+                                <h3>Expression Structure</h3>
+                                <pre id="expression-tree" class="expression-tree"></pre>
+                            </div>
+                        </div>
+                        
+                        <div class="expression-results">
+                            <h3>Results</h3>
+                            <div id="test-results" class="test-results">
+                                <div class="no-results">Enter an expression and click "Test Expression" to see results</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="mdi mdi-loading mdi-spin"></i>
+            <span>Loading entities...</span>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/tag_manager.js') }}"></script>
 </body>
 </html>

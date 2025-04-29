@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Notification Router</title>
+    <link rel="icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Add cache control meta tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body>
+    <h1>Hello, world!</h1>
+    <div class="status-indicator">
+        <i class="mdi mdi-circle status-online" id="status-indicator"></i>
+        <span id="status-text">Checking...</span>
+    </div>
+    <!-- Use fixed timestamp for cache busting -->
+    <script src="/static/js/script.js?v=28&t=20250428084912"></script>
+</body>
+</html>
