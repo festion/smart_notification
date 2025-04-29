@@ -1,5 +1,11 @@
 # Smart Notification Router Changelog
 
+## v2.0.0-alpha.35 (2025-04-29)
+- Fixed port configuration issues when running as an add-on
+- Implemented lock file mechanism to prevent duplicate processes
+- Disabled Flask auto-reloader to fix "Address in use" errors
+- Made port user-configurable with default of 8181
+
 ## v2.0.0-alpha.34 (2025-04-29)
 - Fixed tabbed navigation functionality in the web interface
 - Enhanced handleNavigation() function to properly show/hide dashboard sections

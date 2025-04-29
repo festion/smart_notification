@@ -3,6 +3,29 @@
 # Simpler run script that doesn't depend on bashio
 set -e
 
+# Create a lock file mechanism to prevent multiple simultaneous runs
+LOCK_FILE="/tmp/smart_notification_router.lock"
+
+# Check if another instance is already running
+if [ -f "$LOCK_FILE" ]; then
+    PID=$(cat "$LOCK_FILE")
+    # Check if the process is still running
+    if kill -0 "$PID" 2>/dev/null; then
+        echo "[INFO] Another instance is already running with PID $PID"
+        # Exit without error to prevent the supervisor from restarting the service repeatedly
+        exit 0
+    else
+        echo "[INFO] Found stale lock file, removing"
+        rm -f "$LOCK_FILE"
+    fi
+fi
+
+# Create lock file with current PID
+echo $$ > "$LOCK_FILE"
+
+# Set up trap to remove lock file on exit
+trap 'rm -f "$LOCK_FILE"; echo "[INFO] Lock file removed"; exit 0' EXIT INT TERM
+
 echo "[INFO] Starting Smart Notification Router service..."
 echo "[INFO] Generating configuration file from add-on options..."
 
