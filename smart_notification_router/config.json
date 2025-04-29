@@ -13,7 +13,7 @@
   "hassio_role": "default",
   "homeassistant_api": true,
   "ingress": true,
-  "ingress_port": 8080,
+  "ingress_port": 8181,
   "panel_icon": "mdi:message-alert",
   "panel_title": "Notification Router",
   "panel_description": "Smart Notification Router",
@@ -38,17 +38,19 @@
   "options": {
     "deduplication_ttl": 300,
     "audience_config": "{\"mobile\":{\"services\":[\"notify.mobile_app_pixel_9_pro_xl\"],\"min_severity\":\"high\"},\"dashboard\":{\"services\":[\"persistent_notification.create\"],\"min_severity\":\"low\"}}",
-    "severity_levels": ["low", "medium", "high", "emergency"]
+    "severity_levels": ["low", "medium", "high", "emergency"],
+    "port": 8181
   },
   "schema": {
     "deduplication_ttl": "int(60,3600)",
     "audience_config": "str",
-    "severity_levels": ["str"]
+    "severity_levels": ["str"],
+    "port": "port"
   },
   "ports": {
-    "8080/tcp": 8080
+    "8181/tcp": "8181"
   },
   "ports_description": {
-    "8080/tcp": "Web interface (Not required for Home Assistant ingress)"
+    "8181/tcp": "Web interface (Not required for Home Assistant ingress)"
   }
 }
